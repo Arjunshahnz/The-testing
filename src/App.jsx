@@ -6,6 +6,7 @@ const NEWS_API_KEY = 'cbec53b5fc7f4f3eba4eff748baabdea';
 const ODDS_API_KEY = 'd74335ffcec211434253c95de77111ae';
 const PROFILE_KEY = 'fieldwatch:multi-source-profile';
 const SEARCH_DELAY = 350;
+const TIME_SLOTS = [6, 8, 10, 12, 14, 16, 18, 20, 22, 24];
 
 const navItems = ['Feed', 'Schedule', 'Players'];
 const categories = ['All', 'News', 'Upcoming', 'Final'];
@@ -16,9 +17,9 @@ const sports = [
     label: 'Football',
     apiSport: 'Soccer',
     icon: 'FB',
-    espn: ['soccer/fifa.world', 'soccer/eng.1', 'soccer/esp.1', 'soccer/ger.1', 'soccer/ita.1'],
-    odds: ['soccer_fifa_world_cup', 'soccer_epl', 'soccer_spain_la_liga', 'soccer_germany_bundesliga', 'soccer_italy_serie_a'],
-    leagues: ['Premier League', 'La Liga', 'Bundesliga', 'Serie A', 'FIFA World Cup 2026'],
+    espn: ['soccer/fifa.world', 'soccer/eng.1', 'soccer/esp.1', 'soccer/ger.1', 'soccer/ita.1', 'soccer/ind.super'],
+    odds: ['soccer_epl'],
+    leagues: ['Premier League', 'La Liga', 'Bundesliga', 'Serie A', 'Indian Super League', 'FIFA World Cup 2026'],
   },
   {
     id: 'basketball',
@@ -52,18 +53,27 @@ const sports = [
     label: 'Cricket',
     apiSport: 'Cricket',
     icon: 'CR',
-    espn: ['cricket/icc'],
+    espn: ['cricket/icc', 'cricket/ipl'],
     odds: ['cricket_international_t20'],
-    leagues: ['ICC Cricket', 'IPL'],
+    leagues: ['India Cricket', 'ICC Cricket', 'IPL'],
   },
   {
     id: 'rugby',
     label: 'Rugby',
     apiSport: 'Rugby',
     icon: 'RU',
-    espn: ['rugby/scoreboard'],
+    espn: ['rugby/scoreboard', 'rugby-league/nrl'],
     odds: ['rugbyleague_nrl', 'rugbyunion_six_nations'],
-    leagues: ['Rugby World Cup', 'Six Nations'],
+    leagues: ['NRL', 'Rugby World Cup', 'Six Nations'],
+  },
+  {
+    id: 'nrl',
+    label: 'NRL',
+    apiSport: 'Rugby',
+    icon: 'NRL',
+    espn: ['rugby-league/nrl'],
+    odds: ['rugbyleague_nrl'],
+    leagues: ['National Rugby League'],
   },
   {
     id: 'nfl',
@@ -293,17 +303,7 @@ function Onboarding({ onComplete }) {
         {step === 1 && (
           <>
             <SportGrid selectedSports={selectedSports} setSelectedSports={setSelectedSports} />
-            <div className="timezone-card">
-              <div>
-                <p className="eyebrow">Timezone detected</p>
-                <h3>{timezone}</h3>
-                <p>All fixtures and odds pages use your local match time.</p>
-              </div>
-              <label>
-                Change timezone
-                <input value={timezone} onChange={(event) => setTimezone(event.target.value)} />
-              </label>
-            </div>
+            <TimezonePicker timezone={timezone} setTimezone={setTimezone} />
             <LeagueCoverage sports={selectedSports} />
           </>
         )}
@@ -388,6 +388,62 @@ function LeagueCoverage({ sports: selectedSports }) {
               <small>{league === 'FIFA World Cup 2026' ? 'ESPN fifa.world scoreboard + NewsAPI' : 'TheSportsDB + ESPN where available'}</small>
             </article>
           )),
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TimezonePicker({ setTimezone, timezone }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const options = useMemo(() => getTimezoneOptions(), []);
+  const selected = options.find((option) => option.value === timezone) ?? formatTimezoneOption(timezone);
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredOptions = normalizedQuery
+    ? options.filter((option) => `${option.value} ${option.label}`.toLowerCase().includes(normalizedQuery)).slice(0, 40)
+    : options.slice(0, 40);
+
+  return (
+    <div className="timezone-card">
+      <div>
+        <p className="eyebrow">Choose timezone</p>
+        <h3>{selected.label}</h3>
+        <p>All fixtures, news timestamps, and odds pages use this saved timezone.</p>
+      </div>
+      <div className="timezone-picker">
+        <label htmlFor="timezone-search">Search IANA timezones</label>
+        <input
+          id="timezone-search"
+          onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder="Search Sydney, London, New York..."
+          type="search"
+          value={query}
+        />
+        {open && (
+          <div className="timezone-dropdown">
+            {filteredOptions.map((option) => (
+              <button
+                className={option.value === timezone ? 'is-selected' : ''}
+                key={option.value}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  setTimezone(option.value);
+                  setQuery('');
+                  setOpen(false);
+                }}
+                type="button"
+              >
+                <strong>{option.label}</strong>
+                <span>{option.value}</span>
+              </button>
+            ))}
+          </div>
         )}
       </div>
     </div>
@@ -595,24 +651,30 @@ function Schedule({ data, onAddWatchlist, onOpenFixture, profile, status, watchl
               <span>{day.dayName}</span>
               <strong>{day.label}</strong>
             </header>
-            <div className="match-list">
-              {(byDay[day.isoDate] || []).length ? (
-                byDay[day.isoDate].map((fixture) => (
-                  <article className="match-card" key={fixture.id}>
-                    <h3>{fixture.name}</h3>
-                    <strong>{fixture.completed ? fixture.score || 'Final' : formatTime(fixture.date, profile.timezone)}</strong>
-                    <p>{fixture.competition}</p>
-                    <span>{fixture.venue || 'Venue TBA'}</span>
-                    <OddsPreview fixture={fixture} odds={data.odds[fixture.id]} />
-                    <div className="card-actions">
-                      <button onClick={() => onOpenFixture(fixture)} type="button">Details</button>
-                      <WatchButton item={fixtureToWatchItem(fixture)} onAdd={onAddWatchlist} profile={profile} watchlist={watchlist} />
+            <div className="timetable">
+              {TIME_SLOTS.map((slot) => {
+                const slotFixtures = (byDay[day.isoDate] || []).filter((fixture) => fixtureSlot(fixture, profile.timezone) === slot);
+                return (
+                  <div className={slotFixtures.length ? 'time-slot has-fixtures' : 'time-slot'} key={slot}>
+                    <span className="slot-label">{slotLabel(slot)}</span>
+                    <div className="slot-fixtures">
+                      {slotFixtures.map((fixture) => (
+                        <article className="match-card" key={fixture.id}>
+                          <h3>{fixture.name}</h3>
+                          <strong>{fixture.completed ? fixture.score || 'Final' : formatTime(fixture.date, profile.timezone)}</strong>
+                          <p>{fixture.competition}</p>
+                          <span>{fixture.venue || 'Venue TBA'}</span>
+                          <OddsPreview fixture={fixture} odds={data.odds[fixture.id]} />
+                          <div className="card-actions">
+                            <button onClick={() => onOpenFixture(fixture)} type="button">Details</button>
+                            <WatchButton item={fixtureToWatchItem(fixture)} onAdd={onAddWatchlist} profile={profile} watchlist={watchlist} />
+                          </div>
+                        </article>
+                      ))}
                     </div>
-                  </article>
-                ))
-              ) : (
-                <p className="no-matches">No matches</p>
-              )}
+                  </div>
+                );
+              })}
             </div>
           </section>
         ))}
@@ -640,7 +702,7 @@ function FixtureDetail({ fixture, news, odds, onBack, onOpenTeam, profile }) {
           <div className="player-grid compact-grid">
             {detail.players.map((player) => (
               <article className="player-card" key={player.id}>
-                <div className="avatar">{initials(player.name)}</div>
+                <PlayerAvatar player={player} />
                 <h4>{player.name}</h4>
                 <p>{player.position || player.team || 'Player'}</p>
                 <span>{player.team}</span>
@@ -790,7 +852,7 @@ function PlayerGrid({ title, players, followedPlayerIds, onAddWatchlist, onFollo
         <div className="player-grid">
           {players.map((player) => (
             <article className="player-card" key={player.id}>
-              <div className="avatar">{initials(player.name)}</div>
+              <PlayerAvatar player={player} />
               <h4>{player.name}</h4>
               <p>{player.position || player.sport || 'Player'}</p>
               <span>{player.team || player.league || 'TheSportsDB'}</span>
@@ -806,6 +868,14 @@ function PlayerGrid({ title, players, followedPlayerIds, onAddWatchlist, onFollo
       )}
     </section>
   );
+}
+
+function PlayerAvatar({ player }) {
+  if (player.thumb) {
+    return <img className="player-photo" src={player.thumb} alt={player.name} loading="lazy" />;
+  }
+
+  return <div className="avatar">{initials(player.name)}</div>;
 }
 
 function Filters({ categories: items, categoryFilter, followedTeams, setCategoryFilter, setTeamFilter, teamFilter }) {
@@ -846,10 +916,14 @@ function NewsList({ articles, timezone }) {
   return articles.length ? (
     <div className="news-list-compact">
       {articles.map((article) => (
-        <a href={article.url} key={article.id} rel="noreferrer" target="_blank">
+        <article className="fixture-news-card" key={article.id}>
           <strong>{article.title}</strong>
-          <span>{article.source} · {formatDateTime(article.publishedAt, timezone)}</span>
-        </a>
+          <span>{article.source} · {timeAgo(article.publishedAt, timezone)}</span>
+          {article.description && <p>{article.description}</p>}
+          <a href={article.url} rel="noreferrer" target="_blank">
+            Read article &rarr;
+          </a>
+        </article>
       ))}
     </div>
   ) : (
@@ -871,7 +945,7 @@ function OddsTable({ odds, fixture }) {
   if (!odds?.markets) return <p className="notice">Odds unavailable for this fixture.</p>;
   return (
     <div className="odds-table">
-      {['h2h', 'btts', 'totals'].map((marketKey) => (
+      {['h2h', 'totals'].map((marketKey) => (
         <section key={marketKey}>
           <h4>{marketLabel(marketKey, fixture)}</h4>
           {(odds.markets[marketKey] || []).map((market) => (
@@ -987,26 +1061,43 @@ async function fetchFixtures(profile) {
 }
 
 async function fetchNews(profile, fixtures) {
-  const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const terms = unique([
+  const from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const teamNames = unique([
     ...profile.teams.map((team) => team.name),
+    ...fixtures.slice(0, 10).flatMap((fixture) => [fixture.homeTeam, fixture.awayTeam].filter(Boolean)),
     'FIFA World Cup 2026',
-    ...fixtures.slice(0, 8).flatMap((fixture) => [fixture.homeTeam, fixture.awayTeam].filter(Boolean)),
-  ]).slice(0, 12);
-  const query = terms.map((term) => `"${term}"`).join(' OR ');
-  if (!query) return [];
-  const url = new URL('https://newsapi.org/v2/everything');
-  url.searchParams.set('q', `sports AND (${query})`);
-  url.searchParams.set('from', from);
-  url.searchParams.set('language', 'en');
-  url.searchParams.set('sortBy', 'publishedAt');
-  url.searchParams.set('pageSize', '60');
-  url.searchParams.set('apiKey', NEWS_API_KEY);
-  const data = await fetchJson(url.toString());
-  return (data.articles || [])
+  ]).slice(0, 16);
+  const queryGroups = teamNames.flatMap((teamName) => teamNewsQueries(teamName).map((query) => ({ teamName, query })));
+  const newsRequests = queryGroups.slice(0, 36).map(({ teamName, query }) => {
+    const url = new URL('https://newsapi.org/v2/everything');
+    url.searchParams.set('q', query);
+    url.searchParams.set('from', from);
+    url.searchParams.set('language', 'en');
+    url.searchParams.set('sortBy', 'publishedAt');
+    url.searchParams.set('pageSize', '8');
+    url.searchParams.set('apiKey', NEWS_API_KEY);
+    return fetchJson(url.toString()).then((data) =>
+      (data.articles || []).map((article, index) => normalizeArticle(article, `${teamName}-${index}`, teamNames)),
+    );
+  });
+  const espnRequests = [
+    'soccer/eng.1/news',
+    'soccer/fifa.world/news',
+    'soccer/ind.super/news',
+    'basketball/nba/news',
+    'football/nfl/news',
+    'cricket/ipl/news',
+    'rugby-league/nrl/news',
+  ].map((path) =>
+    fetchJson(`${ESPN_BASE}/${path}`).then((data) =>
+      (data.articles || []).map((article, index) => normalizeEspnArticle(article, `${path}-${index}`, teamNames)),
+    ),
+  );
+  const settled = await Promise.allSettled([...newsRequests, ...espnRequests]);
+  const articles = settled.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
+  return dedupeArticles(articles)
     .filter((article) => article.url && new Date(article.publishedAt) >= new Date(from))
-    .map((article, index) => normalizeArticle(article, index, terms))
-    .filter((article) => article.relatedTeams.length || /world cup|sports|football|basketball|nfl|nba|tennis|cricket|rugby|f1/i.test(`${article.title} ${article.description}`));
+    .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
 }
 
 async function fetchOdds(fixtures, selectedSports) {
@@ -1015,8 +1106,8 @@ async function fetchOdds(fixtures, selectedSports) {
     oddsSports.map((sportKey) => {
       const url = new URL(`https://api.the-odds-api.com/v4/sports/${sportKey}/odds/`);
       url.searchParams.set('apiKey', ODDS_API_KEY);
-      url.searchParams.set('regions', 'us,uk,eu');
-      url.searchParams.set('markets', 'h2h,btts,totals');
+      url.searchParams.set('regions', 'uk,us,au');
+      url.searchParams.set('markets', 'h2h,totals');
       url.searchParams.set('oddsFormat', 'decimal');
       return fetchJson(url.toString()).then((events) => ({ sportKey, events }));
     }),
@@ -1044,10 +1135,7 @@ async function fetchKeyPlayers(fixture) {
   const teams = [fixture.homeTeam, fixture.awayTeam].filter(Boolean);
   const playerLists = await Promise.all(
     teams.map(async (teamName) => {
-      const teamData = await sportsDb('searchteams.php', { t: teamName });
-      const team = teamData.teams?.[0];
-      if (!team?.idTeam) return [];
-      const playersData = await sportsDb('lookup_all_players.php', { id: team.idTeam });
+      const playersData = await sportsDb('searchplayers.php', { t: teamName });
       return (playersData.player || []).slice(0, 4).map(normalizePlayer);
     }),
   );
@@ -1082,6 +1170,7 @@ function normalizePlayer(player) {
     league: player.strTeam,
     position: player.strPosition,
     nationality: player.strNationality,
+    thumb: player.strThumb || player.strCutout || player.strRender,
     meta: `${player.strPosition || 'Player'} - ${player.strTeam || player.strSport || 'TheSportsDB'}`,
   };
 }
@@ -1143,8 +1232,23 @@ function normalizeArticle(article, index, terms) {
   };
 }
 
+function normalizeEspnArticle(article, index, terms) {
+  const title = article.headline || article.title || 'ESPN sports news';
+  const description = article.description || article.teaser || '';
+  const haystack = `${title} ${description}`.toLowerCase();
+  return {
+    id: article.dataSourceIdentifier || article.id || article.links?.web?.href || `espn-${index}`,
+    title,
+    description,
+    source: 'ESPN',
+    url: article.links?.web?.href || article.link || article.url,
+    publishedAt: article.published || article.lastModified || new Date().toISOString(),
+    relatedTeams: terms.filter((term) => haystack.includes(term.toLowerCase())),
+  };
+}
+
 function normalizeOdds(event) {
-  const markets = { h2h: [], btts: [], totals: [] };
+  const markets = { h2h: [], totals: [] };
   (event.bookmakers || []).forEach((bookmaker) => {
     (bookmaker.markets || []).forEach((market) => {
       if (!markets[market.key]) return;
@@ -1162,7 +1266,16 @@ function fixtureToWatchItem(fixture) {
 }
 
 function newsForFixture(news, fixture) {
-  return news.filter((article) => article.relatedTeams.some((team) => includesTeam(fixture, team)) || [fixture.homeTeam, fixture.awayTeam].some((team) => article.title?.toLowerCase().includes((team || '').toLowerCase())));
+  const fixtureTeams = [fixture.homeTeam, fixture.awayTeam].filter(Boolean);
+  const matched = news.filter(
+    (article) =>
+      article.relatedTeams.some((team) => includesTeam(fixture, team)) ||
+      fixtureTeams.some((team) => teamNewsQueries(team).some((query) => articleMatchesQuery(article, query))),
+  );
+
+  if (matched.length) return matched;
+
+  return news.filter((article) => /espn|world cup|football|sports/i.test(`${article.source} ${article.title}`));
 }
 
 function oddsMatchesFixture(event, fixture) {
@@ -1256,8 +1369,57 @@ function unique(items) {
   return [...new Set(items.filter(Boolean))];
 }
 
+function dedupeArticles(articles) {
+  return articles.filter(
+    (article, index, allArticles) =>
+      article.url && allArticles.findIndex((candidate) => candidate.url === article.url) === index,
+  );
+}
+
+function teamNewsQueries(teamName = '') {
+  const aliases = {
+    arsenal: ['Arsenal FC', 'Arsenal football', 'Gunners'],
+    'man united': ['Manchester United', 'Man United football', 'Red Devils'],
+    'manchester united': ['Manchester United', 'Man United football', 'Red Devils'],
+    'golden state warriors': ['Golden State Warriors', 'Warriors NBA', 'Steph Curry Warriors'],
+    india: ['India cricket', 'Team India cricket', 'BCCI'],
+    'india cricket': ['India cricket', 'Team India cricket', 'BCCI'],
+    'fifa world cup 2026': ['FIFA World Cup 2026', 'World Cup fixtures', 'FIFA World Cup news'],
+  };
+  const normalized = teamName.toLowerCase();
+  return unique([teamName, ...(aliases[normalized] || [`${teamName} sports`, `${teamName} news`])]);
+}
+
+function articleMatchesQuery(article, query) {
+  const haystack = `${article.title || ''} ${article.description || ''}`.toLowerCase();
+  return query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((part) => part.length > 2)
+    .some((part) => haystack.includes(part));
+}
+
 function fixtureTime(fixture) {
   return new Date(fixture.date).getTime();
+}
+
+function fixtureSlot(fixture, timezone) {
+  const hour = Number(
+    new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      hour12: false,
+      timeZone: safeTimezone(timezone),
+    }).format(new Date(fixture.date)),
+  );
+  if (hour < 6) return 6;
+  if (hour >= 24) return 24;
+  return Math.min(24, Math.floor(hour / 2) * 2);
+}
+
+function slotLabel(slot) {
+  if (slot === 24) return 'Midnight';
+  if (slot === 12) return '12pm';
+  return slot > 12 ? `${slot - 12}pm` : `${slot}am`;
 }
 
 function includesTeam(fixture, teamName = '') {
@@ -1271,6 +1433,16 @@ function normalizeName(name = '') {
 
 function formatDateTime(value, timezone) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short', timeZone: safeTimezone(timezone) }).format(new Date(value));
+}
+
+function timeAgo(value) {
+  const diffMs = Date.now() - new Date(value).getTime();
+  const minutes = Math.max(1, Math.round(diffMs / 60000));
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} hr ago`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
 }
 
 function formatTime(value, timezone) {
@@ -1296,6 +1468,47 @@ function safeTimezone(timezone) {
   }
 }
 
+function getTimezoneOptions() {
+  const zones =
+    typeof Intl.supportedValuesOf === 'function'
+      ? Intl.supportedValuesOf('timeZone')
+      : [
+          'America/New_York',
+          'America/Chicago',
+          'America/Denver',
+          'America/Los_Angeles',
+          'America/Sao_Paulo',
+          'Europe/London',
+          'Europe/Paris',
+          'Europe/Berlin',
+          'Asia/Dubai',
+          'Asia/Kolkata',
+          'Asia/Tokyo',
+          'Australia/Sydney',
+          'Pacific/Auckland',
+        ];
+
+  return zones.map(formatTimezoneOption).sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function formatTimezoneOption(value) {
+  const city = value.split('/').pop().replaceAll('_', ' ');
+  return {
+    value,
+    label: `${city} (${timezoneOffset(value)})`,
+  };
+}
+
+function timezoneOffset(timezone) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: safeTimezone(timezone),
+    timeZoneName: 'shortOffset',
+  }).formatToParts(new Date());
+  return parts.find((part) => part.type === 'timeZoneName')?.value.replace('GMT', 'UTC') || 'UTC';
+}
+
 function initials(name = '') {
   return name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
 }
@@ -1310,7 +1523,6 @@ function shortName(name = '') {
 
 function marketLabel(key, fixture) {
   if (key === 'h2h') return fixture.sport === 'Soccer' ? 'Match winner' : 'Winner';
-  if (key === 'btts') return 'Both teams to score';
   return 'Over/under 2.5';
 }
 
