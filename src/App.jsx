@@ -1138,7 +1138,15 @@ async function fetchKeyPlayers(fixture) {
   const playerLists = await Promise.all(
     teams.map(async (teamName) => {
       const playersData = await sportsDb('searchplayers.php', { t: teamName });
-      return (playersData.player || []).slice(0, 4).map(normalizePlayer);
+      if (playersData.player?.length) {
+        return playersData.player.slice(0, 4).map(normalizePlayer);
+      }
+
+      const teamData = await sportsDb('searchteams.php', { t: teamName });
+      const team = teamData.teams?.[0];
+      if (!team?.idTeam) return [];
+      const rosterData = await sportsDb('lookup_all_players.php', { id: team.idTeam });
+      return (rosterData.player || []).slice(0, 4).map(normalizePlayer);
     }),
   );
   return playerLists.flat().slice(0, 8);
