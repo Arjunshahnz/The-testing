@@ -315,6 +315,16 @@ a {
   border-radius: 1rem;
   color: var(--green-dark);
   background: var(--green-soft);
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.sport-icon.compact {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  flex: 0 0 auto;
+  font-size: 0.65rem;
 }
 
 .sport-card.is-selected .sport-icon {
@@ -343,6 +353,49 @@ a {
   gap: 0.85rem;
 }
 
+.timezone-card,
+.league-panel,
+.upcoming-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  background: rgba(255, 253, 248, 0.82);
+}
+
+.timezone-card {
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.45fr);
+  align-items: end;
+}
+
+.timezone-card h3,
+.league-panel h3,
+.upcoming-panel h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  letter-spacing: -0.03em;
+}
+
+.timezone-card p:not(.eyebrow),
+.league-card small,
+.upcoming-card small,
+.notice,
+.error-text {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.timezone-card label,
+.watch-search label {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 850;
+}
+
 .picker label,
 .player-search label {
   display: flex;
@@ -365,7 +418,9 @@ a {
 }
 
 .picker input,
-.player-search input {
+.player-search input,
+.timezone-card input,
+.watch-search input {
   width: 100%;
   min-height: 3.25rem;
   padding: 0.9rem 1rem;
@@ -377,9 +432,55 @@ a {
 }
 
 .picker input:focus,
-.player-search input:focus {
+.player-search input:focus,
+.timezone-card input:focus,
+.watch-search input:focus {
   border-color: var(--green);
   box-shadow: 0 0 0 4px rgba(31, 111, 67, 0.12);
+}
+
+.league-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.league-card {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: #f6f2e9;
+}
+
+.league-card span {
+  color: var(--green);
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.league-card strong {
+  letter-spacing: -0.03em;
+}
+
+.notice {
+  padding: 0.85rem;
+  border-radius: 1rem;
+  background: #f6f2e9;
+}
+
+.error-text {
+  padding: 0.85rem;
+  border-radius: 1rem;
+  color: #7b2f1f;
+  background: #f7e5dd;
+}
+
+.status {
+  margin-bottom: 1rem;
 }
 
 .dropdown {
@@ -408,6 +509,12 @@ a {
   color: var(--ink);
   background: #f6f2e9;
   text-align: left;
+}
+
+.dropdown button > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
 }
 
 .dropdown span,
@@ -546,7 +653,8 @@ a {
 .watchlist-items,
 .match-list,
 .players-page,
-.player-section {
+.player-section,
+.upcoming-grid {
   display: grid;
   gap: 0.9rem;
 }
@@ -558,7 +666,8 @@ a {
 .match-card,
 .player-search,
 .player-card,
-.empty-card {
+.empty-card,
+.upcoming-card {
   border: 1px solid var(--line);
   background: var(--panel);
   box-shadow: var(--shadow);
@@ -639,6 +748,37 @@ a {
   background: var(--ink);
 }
 
+.upcoming-panel {
+  margin-bottom: 1rem;
+}
+
+.upcoming-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.upcoming-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.9rem;
+  border-radius: 1rem;
+  box-shadow: none;
+}
+
+.upcoming-card > span {
+  color: var(--green-dark);
+  font-weight: 800;
+}
+
+.upcoming-card button {
+  justify-self: start;
+  margin-top: 0.25rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 999px;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  font-weight: 850;
+}
+
 .watchlist {
   position: sticky;
   top: 5.8rem;
@@ -665,6 +805,21 @@ a {
   color: var(--green-dark);
   background: var(--green-soft);
   font-weight: 900;
+}
+
+.watch-search {
+  position: relative;
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: #f6f2e9;
+}
+
+.watch-search .dropdown {
+  right: -0.25rem;
+  left: -0.25rem;
 }
 
 .watchlist-card {
@@ -859,6 +1014,10 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .league-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .day-column {
     min-height: auto;
   }
@@ -897,6 +1056,11 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .timezone-card,
+  .upcoming-grid {
+    grid-template-columns: 1fr;
+  }
+
   .feed-layout {
     grid-template-columns: 1fr;
   }
@@ -931,7 +1095,8 @@ a {
   }
 
   .sport-grid,
-  .calendar {
+  .calendar,
+  .league-grid {
     grid-template-columns: 1fr;
   }
 
