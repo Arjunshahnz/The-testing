@@ -32,6 +32,15 @@ button {
   font: inherit;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+a {
+  color: inherit;
+}
+
 .app {
   min-height: 100vh;
   background:
@@ -87,10 +96,15 @@ button {
 .nav-link,
 .chip,
 .pill,
-.day-tile,
+.sport-card,
+.primary-action,
 .article-footer button,
+.article-footer a,
 .match-action button,
-.player-card button {
+.player-card button,
+.watchlist-item button,
+.skip-search,
+.watchlist-button {
   cursor: pointer;
   transition:
     background 180ms ease,
@@ -115,10 +129,15 @@ button {
 .nav-link:hover,
 .chip:hover,
 .pill:hover,
-.day-tile:hover,
+.sport-card:hover,
+.primary-action:hover,
 .article-footer button:hover,
+.article-footer a:hover,
 .match-action button:hover,
-.player-card button:hover {
+.player-card button:hover,
+.watchlist-item button:hover,
+.skip-search:hover,
+.watchlist-button:hover {
   transform: translateY(-1px);
 }
 
@@ -182,6 +201,98 @@ button {
   margin-top: 0.2rem;
   font-size: 1.55rem;
   letter-spacing: -0.05em;
+}
+
+.hero-card small {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.onboarding {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at top left, rgba(31, 111, 67, 0.18), transparent 35rem),
+    var(--bg);
+}
+
+.onboarding-card {
+  display: grid;
+  width: min(920px, 100%);
+  gap: 1.5rem;
+  padding: clamp(1.25rem, 4vw, 2.25rem);
+  border: 1px solid var(--line);
+  border-radius: 1.75rem;
+  background: rgba(255, 253, 248, 0.86);
+  box-shadow: var(--shadow);
+}
+
+.onboarding-card h1 {
+  max-width: 680px;
+  margin: 0;
+  font-size: clamp(2.3rem, 6vw, 4.9rem);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+
+.onboarding-card p:not(.eyebrow) {
+  max-width: 620px;
+  margin: 0.85rem 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.sport-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.sport-card {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 7rem;
+  align-content: space-between;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 1.2rem;
+  color: var(--ink);
+  background: #fffaf0;
+  text-align: left;
+}
+
+.sport-card span {
+  font-size: 1.1rem;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+}
+
+.sport-card small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.sport-card.selected {
+  color: #fff;
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.sport-card.selected small {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.primary-action {
+  justify-self: start;
+  padding: 0.85rem 1.1rem;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--ink);
+  font-weight: 850;
 }
 
 .page-grid {
@@ -249,11 +360,17 @@ button {
 }
 
 .chip.selected,
-.pill.selected,
-.day-tile.active {
+.pill.selected {
   color: #fff;
   border-color: var(--accent);
   background: var(--accent);
+}
+
+.feed-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 1.25rem;
+  align-items: start;
 }
 
 .article-list,
@@ -311,35 +428,77 @@ button {
 }
 
 .article-footer button,
+.article-footer a,
 .match-action button,
-.player-card button {
+.player-card button,
+.watchlist-item button,
+.skip-search,
+.watchlist-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.65rem 0.9rem;
   border-radius: 999px;
   color: var(--accent-strong);
   background: var(--accent-soft);
   font-weight: 800;
+  text-decoration: none;
 }
 
-.day-strip {
+.action-row,
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.watchlist-panel {
+  position: sticky;
+  top: 5.5rem;
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 0.7rem;
-  overflow-x: auto;
-  padding-bottom: 0.2rem;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 1.35rem;
+  background: var(--panel);
+  box-shadow: var(--shadow);
 }
 
-.day-tile {
-  min-width: 6.75rem;
+.watchlist-panel h2 {
+  margin: 0;
+  font-size: 1.55rem;
+  letter-spacing: -0.05em;
+}
+
+.watchlist-empty,
+.watchlist-item {
   padding: 0.9rem;
   border: 1px solid var(--line);
   border-radius: 1rem;
-  color: var(--ink);
-  background: rgba(255, 253, 248, 0.76);
-  text-align: left;
+  background: #f6f2e9;
 }
 
-.day-tile span,
-.status {
+.watchlist-empty p,
+.watchlist-item p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.watchlist-items {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.watchlist-item {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.watchlist-item span,
+.status,
+.calendar-day-header span {
   display: block;
   margin-bottom: 0.25rem;
   font-size: 0.76rem;
@@ -348,8 +507,80 @@ button {
   text-transform: uppercase;
 }
 
-.day-tile strong {
-  font-size: 1rem;
+.watchlist-item span,
+.calendar-day-header span {
+  color: var(--accent);
+}
+
+.watchlist-item strong {
+  font-size: 1.05rem;
+  letter-spacing: -0.03em;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.calendar-day {
+  display: grid;
+  gap: 0.8rem;
+  min-height: 22rem;
+  align-content: start;
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  background: rgba(255, 253, 248, 0.72);
+}
+
+.calendar-day.today {
+  border-color: rgba(31, 111, 67, 0.48);
+  background: linear-gradient(180deg, var(--accent-soft), var(--panel));
+}
+
+.calendar-day-header {
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.calendar-day-header strong {
+  font-size: 1.05rem;
+  letter-spacing: -0.03em;
+}
+
+.calendar-matches {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.calendar-match-card {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--panel);
+}
+
+.calendar-match-card h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+}
+
+.calendar-match-card h3 span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.calendar-match-card p,
+.calendar-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .match-card {
@@ -410,6 +641,88 @@ button {
 .player-section {
   display: grid;
   gap: 0.8rem;
+}
+
+.search-panel {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.45fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  background: rgba(255, 253, 248, 0.78);
+}
+
+.search-panel label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+}
+
+.search-panel p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  gap: 0.55rem;
+}
+
+.search-box input {
+  width: 100%;
+  min-height: 2.95rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--panel);
+  font: inherit;
+  outline: none;
+}
+
+.search-box input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(31, 111, 67, 0.12);
+}
+
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  left: 0;
+  z-index: 8;
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 1.1rem;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.search-result {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.6rem;
+  border-radius: 0.85rem;
+  background: #f6f2e9;
+}
+
+.search-result div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.search-result span {
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .player-section h3 {
@@ -503,8 +816,25 @@ button {
     display: grid;
   }
 
-  .day-strip {
-    grid-template-columns: repeat(7, 6.75rem);
+  .feed-layout,
+  .search-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .watchlist-panel {
+    position: static;
+  }
+
+  .sport-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calendar-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calendar-day {
+    min-height: auto;
   }
 
   .match-card {
@@ -539,5 +869,22 @@ button {
 
   .hero h1 {
     font-size: 2.45rem;
+  }
+
+  .sport-grid,
+  .calendar-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-box,
+  .search-result,
+  .article-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .search-dropdown {
+    position: static;
+    margin-top: 0.5rem;
   }
 }

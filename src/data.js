@@ -1,3 +1,14 @@
+export const sportsOptions = [
+  'Football',
+  'Basketball',
+  'Tennis',
+  'F1',
+  'Cricket',
+  'Rugby',
+  'NFL',
+  'Baseball',
+];
+
 export const followedTeams = ['Arsenal', 'Golden State Warriors', 'Man United'];
 
 export const categories = ['transfers', 'injuries', 'match reports', 'press'];
@@ -12,6 +23,15 @@ export const articles = [
     time: '12 min ago',
     publishedAt: '2026-06-29T06:43:00Z',
     summary: 'Club scouts are tracking two versatile midfielders as Mikel Arteta keeps rotation options open.',
+    url: 'https://example.com/fieldwatch/arsenal-midfield-depth',
+    watchlistTarget: {
+      type: 'player',
+      name: 'Martin Zubimendi',
+      team: 'Real Sociedad',
+      role: 'Midfielder',
+      note: 'Linked with Arsenal midfield depth',
+      metric: '88 pass%',
+    },
   },
   {
     id: 2,
@@ -22,6 +42,15 @@ export const articles = [
     time: '28 min ago',
     publishedAt: '2026-06-29T06:27:00Z',
     summary: "Steve Kerr praised the forward's pace and decision-making during an upbeat media session.",
+    url: 'https://example.com/fieldwatch/warriors-kuminga-camp',
+    watchlistTarget: {
+      type: 'player',
+      name: 'Jonathan Kuminga',
+      team: 'Golden State Warriors',
+      role: 'Forward',
+      note: 'Featured heavily in camp notes',
+      metric: '+12 net',
+    },
   },
   {
     id: 3,
@@ -32,6 +61,15 @@ export const articles = [
     time: '44 min ago',
     publishedAt: '2026-06-29T06:11:00Z',
     summary: 'The defender completed a full session and could feature in the next preseason fixture.',
+    url: 'https://example.com/fieldwatch/man-united-martinez-training',
+    watchlistTarget: {
+      type: 'player',
+      name: 'Lisandro Martinez',
+      team: 'Man United',
+      role: 'Defender',
+      note: 'Back in full contact work',
+      metric: 'Fit',
+    },
   },
   {
     id: 4,
@@ -42,6 +80,12 @@ export const articles = [
     time: '1 hr ago',
     publishedAt: '2026-06-29T05:55:00Z',
     summary: 'Bukayo Saka scored late after Arsenal controlled possession and created the better chances.',
+    url: 'https://example.com/fieldwatch/arsenal-lyon-report',
+    watchlistTarget: {
+      type: 'team',
+      name: 'Lyon',
+      note: 'Upcoming Arsenal opponent',
+    },
   },
   {
     id: 5,
@@ -52,6 +96,15 @@ export const articles = [
     time: '2 hrs ago',
     publishedAt: '2026-06-29T04:45:00Z',
     summary: 'The Warriors moved quickly after a strong workout that impressed front-office staff.',
+    url: 'https://example.com/fieldwatch/warriors-two-way-guard',
+    watchlistTarget: {
+      type: 'player',
+      name: 'Brandin Podziemski',
+      team: 'Golden State Warriors',
+      role: 'Guard',
+      note: 'Guard rotation watch',
+      metric: '12.4 ppg',
+    },
   },
   {
     id: 6,
@@ -62,6 +115,12 @@ export const articles = [
     time: '3 hrs ago',
     publishedAt: '2026-06-29T03:41:00Z',
     summary: 'Ruben Amorim highlighted compact defending and faster buildup after a controlled draw.',
+    url: 'https://example.com/fieldwatch/united-inter-report',
+    watchlistTarget: {
+      type: 'team',
+      name: 'Inter',
+      note: 'European matchup tracker',
+    },
   },
 ];
 
@@ -69,6 +128,7 @@ export const scheduleDays = [
   {
     key: 'mon',
     label: 'Mon',
+    isoDate: '2026-06-29',
     date: 'Jun 29',
     matches: [
       {
@@ -92,6 +152,7 @@ export const scheduleDays = [
   {
     key: 'tue',
     label: 'Tue',
+    isoDate: '2026-06-30',
     date: 'Jun 30',
     matches: [
       {
@@ -107,6 +168,7 @@ export const scheduleDays = [
   {
     key: 'wed',
     label: 'Wed',
+    isoDate: '2026-07-01',
     date: 'Jul 1',
     matches: [
       {
@@ -122,6 +184,7 @@ export const scheduleDays = [
   {
     key: 'thu',
     label: 'Thu',
+    isoDate: '2026-07-02',
     date: 'Jul 2',
     matches: [
       {
@@ -137,6 +200,7 @@ export const scheduleDays = [
   {
     key: 'fri',
     label: 'Fri',
+    isoDate: '2026-07-03',
     date: 'Jul 3',
     matches: [
       {
@@ -152,6 +216,7 @@ export const scheduleDays = [
   {
     key: 'sat',
     label: 'Sat',
+    isoDate: '2026-07-04',
     date: 'Jul 4',
     matches: [
       {
@@ -175,6 +240,7 @@ export const scheduleDays = [
   {
     key: 'sun',
     label: 'Sun',
+    isoDate: '2026-07-05',
     date: 'Jul 5',
     matches: [],
   },
