@@ -21,7 +21,7 @@ export const articles = [
     source: 'Bay Hoops Wire',
     time: '28 min ago',
     publishedAt: '2026-06-29T06:27:00Z',
-    summary: 'Steve Kerr praised the forward's pace and decision-making during an upbeat media session.',
+    summary: "Steve Kerr praised the forward's pace and decision-making during an upbeat media session.",
   },
   {
     id: 3,
