@@ -1,171 +1,188 @@
 import { useEffect, useMemo, useState } from 'react';
 
-const API_BASE = 'https://www.thesportsdb.com/api/v1/json/3';
-const PROFILE_KEY = 'fieldwatch:live-profile';
+const SPORTDB_BASE = 'https://www.thesportsdb.com/api/v1/json/3';
+const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports';
+const NEWS_API_KEY = 'cbec53b5fc7f4f3eba4eff748baabdea';
+const ODDS_API_KEY = 'd74335ffcec211434253c95de77111ae';
+const PROFILE_KEY = 'fieldwatch:multi-source-profile';
 const SEARCH_DELAY = 350;
-const navItems = ['Feed', 'Schedule', 'Players'];
-const categories = ['All', 'Upcoming', 'Match Reports', 'Press'];
 
-const sportOptions = [
-  { id: 'football', label: 'Football', apiSport: 'Soccer', icon: 'FB' },
-  { id: 'basketball', label: 'Basketball', apiSport: 'Basketball', icon: 'BB' },
-  { id: 'tennis', label: 'Tennis', apiSport: 'Tennis', icon: 'TN' },
-  { id: 'f1', label: 'F1', apiSport: 'Motorsport', icon: 'F1' },
-  { id: 'cricket', label: 'Cricket', apiSport: 'Cricket', icon: 'CR' },
-  { id: 'rugby', label: 'Rugby', apiSport: 'Rugby', icon: 'RU' },
-  { id: 'nfl', label: 'NFL', apiSport: 'American Football', icon: 'NFL' },
-  { id: 'baseball', label: 'Baseball', apiSport: 'Baseball', icon: 'MLB' },
+const navItems = ['Feed', 'Schedule', 'Players'];
+const categories = ['All', 'News', 'Upcoming', 'Final'];
+
+const sports = [
+  {
+    id: 'football',
+    label: 'Football',
+    apiSport: 'Soccer',
+    icon: 'FB',
+    espn: ['soccer/fifa.world', 'soccer/eng.1', 'soccer/esp.1', 'soccer/ger.1', 'soccer/ita.1'],
+    odds: ['soccer_fifa_world_cup', 'soccer_epl', 'soccer_spain_la_liga', 'soccer_germany_bundesliga', 'soccer_italy_serie_a'],
+    leagues: ['Premier League', 'La Liga', 'Bundesliga', 'Serie A', 'FIFA World Cup 2026'],
+  },
+  {
+    id: 'basketball',
+    label: 'Basketball',
+    apiSport: 'Basketball',
+    icon: 'BB',
+    espn: ['basketball/nba'],
+    odds: ['basketball_nba'],
+    leagues: ['NBA', 'EuroLeague'],
+  },
+  {
+    id: 'tennis',
+    label: 'Tennis',
+    apiSport: 'Tennis',
+    icon: 'TN',
+    espn: ['tennis/atp', 'tennis/wta'],
+    odds: ['tennis_atp', 'tennis_wta'],
+    leagues: ['ATP', 'WTA'],
+  },
+  {
+    id: 'f1',
+    label: 'F1',
+    apiSport: 'Motorsport',
+    icon: 'F1',
+    espn: ['racing/f1'],
+    odds: [],
+    leagues: ['Formula 1'],
+  },
+  {
+    id: 'cricket',
+    label: 'Cricket',
+    apiSport: 'Cricket',
+    icon: 'CR',
+    espn: ['cricket/icc'],
+    odds: ['cricket_international_t20'],
+    leagues: ['ICC Cricket', 'IPL'],
+  },
+  {
+    id: 'rugby',
+    label: 'Rugby',
+    apiSport: 'Rugby',
+    icon: 'RU',
+    espn: ['rugby/scoreboard'],
+    odds: ['rugbyleague_nrl', 'rugbyunion_six_nations'],
+    leagues: ['Rugby World Cup', 'Six Nations'],
+  },
+  {
+    id: 'nfl',
+    label: 'NFL',
+    apiSport: 'American Football',
+    icon: 'NFL',
+    espn: ['football/nfl'],
+    odds: ['americanfootball_nfl'],
+    leagues: ['NFL'],
+  },
+  {
+    id: 'baseball',
+    label: 'Baseball',
+    apiSport: 'Baseball',
+    icon: 'MLB',
+    espn: ['baseball/mlb'],
+    odds: ['baseball_mlb'],
+    leagues: ['MLB'],
+  },
 ];
 
-const featuredLeagues = {
-  football: [
-    { name: 'English Premier League', fallbackId: '4328' },
-    { name: 'Spanish La Liga', fallbackId: '4335' },
-    { name: 'German Bundesliga', fallbackId: '4331' },
-    { name: 'Italian Serie A', fallbackId: '4332' },
-    { name: 'FIFA World Cup', fallbackId: '4429' },
-    { name: 'FIFA World Cup 2026', fallbackId: '4429' },
-  ],
-  basketball: [
-    { name: 'NBA', fallbackId: '4387' },
-    { name: 'EuroLeague Basketball', fallbackId: '4546' },
-  ],
-  tennis: [
-    { name: 'ATP Tour', fallbackId: '4464' },
-    { name: 'WTA Tour', fallbackId: '4465' },
-  ],
-  f1: [{ name: 'Formula 1', fallbackId: '4370' }],
-  cricket: [
-    { name: 'Indian Premier League', fallbackId: '4465' },
-    { name: 'ICC Cricket World Cup', fallbackId: '4522' },
-    { name: 'The Ashes', fallbackId: '4618' },
-  ],
-  rugby: [
-    { name: 'Rugby World Cup', fallbackId: '4428' },
-    { name: 'Six Nations Championship', fallbackId: '4474' },
-  ],
-  nfl: [{ name: 'NFL', fallbackId: '4391' }],
-  baseball: [{ name: 'MLB', fallbackId: '4424' }],
-};
-
 const fallbackTeams = [
-  liveTeam({
-    idTeam: '133604',
-    strTeam: 'Arsenal',
-    strSport: 'Soccer',
-    strLeague: 'English Premier League',
-  }),
-  liveTeam({
-    idTeam: '133602',
-    strTeam: 'Man United',
-    strSport: 'Soccer',
-    strLeague: 'English Premier League',
-  }),
-  liveTeam({
-    idTeam: '134865',
-    strTeam: 'Golden State Warriors',
-    strSport: 'Basketball',
-    strLeague: 'NBA',
-  }),
+  { id: '133604', type: 'team', name: 'Arsenal', sport: 'Soccer', league: 'English Premier League', meta: 'Premier League' },
+  { id: '133602', type: 'team', name: 'Man United', sport: 'Soccer', league: 'English Premier League', meta: 'Premier League' },
+  { id: '134865', type: 'team', name: 'Golden State Warriors', sport: 'Basketball', league: 'NBA', meta: 'NBA' },
 ];
 
 const emptyProfile = {
   sports: [],
   teams: [],
   players: [],
-  timezone: getBrowserTimezone(),
+  timezone: browserTimezone(),
 };
 
 function App() {
   const [profile, setProfile] = useState(loadProfile);
   const [activePage, setActivePage] = useState('Feed');
   const [watchlist, setWatchlist] = useState([]);
-  const [teamEvents, setTeamEvents] = useState({ upcoming: [], recent: [] });
-  const [eventState, setEventState] = useState({ loading: false, error: '' });
+  const [selectedFixture, setSelectedFixture] = useState(null);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [data, setData] = useState({ fixtures: [], news: [], odds: {}, forms: {} });
+  const [status, setStatus] = useState({ loading: false, errors: [] });
 
   const onboarded = profile.sports.length > 0 && profile.teams.length > 0;
 
   useEffect(() => {
-    if (!onboarded) {
-      return;
-    }
+    if (!onboarded) return undefined;
 
-    let isCurrent = true;
-    setEventState({ loading: true, error: '' });
+    let active = true;
+    setStatus({ loading: true, errors: [] });
 
-    fetchFollowedTeamEvents(profile.teams)
-      .then((events) => {
-        if (!isCurrent) {
-          return;
-        }
-        setTeamEvents(events);
-        setEventState({ loading: false, error: '' });
+    loadDashboardData(profile)
+      .then((nextData) => {
+        if (!active) return;
+        setData(nextData.data);
+        setStatus({ loading: false, errors: nextData.errors });
       })
       .catch((error) => {
-        if (!isCurrent) {
-          return;
-        }
-        setTeamEvents({ upcoming: [], recent: [] });
-        setEventState({
-          loading: false,
-          error: error.message || 'Unable to load live fixtures from TheSportsDB.',
-        });
+        if (!active) return;
+        setData({ fixtures: [], news: [], odds: {}, forms: {} });
+        setStatus({ loading: false, errors: [error.message || 'Unable to load live data.'] });
       });
 
     return () => {
-      isCurrent = false;
+      active = false;
     };
-  }, [onboarded, profile.teams]);
+  }, [onboarded, profile]);
 
   const updateProfile = (updater) => {
-    setProfile((currentProfile) => {
-      const nextProfile = updater(currentProfile);
-      saveProfile(nextProfile);
-      return nextProfile;
+    setProfile((current) => {
+      const next = updater(current);
+      saveProfile(next);
+      return next;
     });
   };
 
+  const goToPage = (page) => {
+    setSelectedFixture(null);
+    setSelectedTeam(null);
+    setActivePage(page);
+  };
+
   const addToWatchlist = (item) => {
-    if (!item || isFollowing(item, profile) || watchlist.some((entry) => entry.id === item.id)) {
-      return;
-    }
-
-    setWatchlist((currentWatchlist) => [...currentWatchlist, item]);
+    if (!item || watchlist.some((entry) => entry.id === item.id) || isFollowing(item, profile)) return;
+    setWatchlist((current) => [...current, item]);
   };
 
-  const removeFromWatchlist = (itemId) => {
-    setWatchlist((currentWatchlist) => currentWatchlist.filter((item) => item.id !== itemId));
-  };
+  const removeFromWatchlist = (id) => setWatchlist((current) => current.filter((item) => item.id !== id));
 
-  const followWatchlistItem = (item) => {
-    updateProfile((currentProfile) => followItem(currentProfile, item));
+  const followItem = (item) => {
+    updateProfile((current) => {
+      if (item.type === 'team') return addUnique(current, 'teams', item);
+      if (item.type === 'player') return addUnique(current, 'players', item);
+      return current;
+    });
     removeFromWatchlist(item.id);
-  };
-
-  const followPlayer = (player) => {
-    updateProfile((currentProfile) => addUnique(currentProfile, 'players', player));
   };
 
   if (!onboarded) {
     return <Onboarding onComplete={(nextProfile) => setAndSaveProfile(nextProfile, setProfile)} />;
   }
 
-  const followedTeamNames = profile.teams.map((team) => team.name);
-  const followedPlayerIds = profile.players.map((player) => player.id);
+  const upcomingFixtures = data.fixtures
+    .filter((fixture) => !fixture.completed)
+    .sort((a, b) => fixtureTime(a) - fixtureTime(b));
 
   return (
     <div className="app">
       <header className="topbar">
-        <a className="brand" href="#top" aria-label="Fieldwatch home">
+        <a className="brand" href="#top" aria-label="Fieldwatch home" onClick={() => goToPage('Feed')}>
           <span className="brand-mark">F</span>
           <span>Fieldwatch</span>
         </a>
         <nav className="nav-tabs" aria-label="Main navigation">
           {navItems.map((page) => (
             <button
-              className={activePage === page ? 'nav-tab is-active' : 'nav-tab'}
+              className={!selectedFixture && !selectedTeam && activePage === page ? 'nav-tab is-active' : 'nav-tab'}
               key={page}
-              onClick={() => setActivePage(page)}
+              onClick={() => goToPage(page)}
               type="button"
             >
               {page}
@@ -176,34 +193,56 @@ function App() {
 
       <main className="shell" id="top">
         <section className="hero">
-          <p className="eyebrow">Live from TheSportsDB</p>
-          <h1>Track real fixtures, teams, and players in your local time.</h1>
+          <p className="eyebrow">Multi-source live tracker</p>
+          <h1>Real fixtures, news, odds, and watchlists in your local time.</h1>
           <p>
-            Timezone: <strong>{profile.timezone}</strong>. Following {profile.teams.length} teams
-            across {profile.sports.map((sport) => sport.label).join(', ')}.
+            Timezone: <strong>{profile.timezone}</strong>. Powered by TheSportsDB, ESPN, NewsAPI,
+            and The Odds API.
           </p>
         </section>
 
-        {activePage === 'Feed' && (
+        {selectedFixture && (
+          <FixtureDetail
+            fixture={selectedFixture}
+            news={data.news}
+            odds={data.odds[selectedFixture.id]}
+            onBack={() => setSelectedFixture(null)}
+            onOpenTeam={setSelectedTeam}
+            profile={profile}
+          />
+        )}
+        {!selectedFixture && selectedTeam && (
+          <TeamPage
+            fixtures={data.fixtures}
+            news={data.news}
+            onBack={() => setSelectedTeam(null)}
+            onOpenFixture={setSelectedFixture}
+            profile={profile}
+            team={selectedTeam}
+          />
+        )}
+        {!selectedFixture && !selectedTeam && activePage === 'Feed' && (
           <Feed
-            eventState={eventState}
-            followedTeamNames={followedTeamNames}
+            data={data}
             onAddWatchlist={addToWatchlist}
-            onFollowWatchlist={followWatchlistItem}
+            onFollowWatchlist={followItem}
+            onOpenFixture={setSelectedFixture}
+            onOpenTeam={setSelectedTeam}
             onRemoveWatchlist={removeFromWatchlist}
             profile={profile}
-            teamEvents={teamEvents}
+            status={status}
+            upcomingFixtures={upcomingFixtures}
             watchlist={watchlist}
           />
         )}
-        {activePage === 'Schedule' && (
-          <Schedule eventState={eventState} events={teamEvents.upcoming} timezone={profile.timezone} />
+        {!selectedFixture && !selectedTeam && activePage === 'Schedule' && (
+          <Schedule data={data} onAddWatchlist={addToWatchlist} onOpenFixture={setSelectedFixture} profile={profile} status={status} watchlist={watchlist} />
         )}
-        {activePage === 'Players' && (
+        {!selectedFixture && !selectedTeam && activePage === 'Players' && (
           <Players
-            followedPlayerIds={followedPlayerIds}
+            followedPlayerIds={profile.players.map((player) => player.id)}
             onAddWatchlist={addToWatchlist}
-            onFollowPlayer={followPlayer}
+            onFollowPlayer={(player) => updateProfile((current) => addUnique(current, 'players', player))}
             profile={profile}
             watchlist={watchlist}
           />
@@ -215,47 +254,12 @@ function App() {
 
 function Onboarding({ onComplete }) {
   const [step, setStep] = useState(1);
-  const [sports, setSports] = useState([]);
-  const [teams, setTeams] = useState(fallbackTeams);
-  const [players, setPlayers] = useState([]);
-  const [timezone, setTimezone] = useState(getBrowserTimezone());
-  const [leagueState, setLeagueState] = useState({ loading: false, error: '', leagues: [] });
+  const [selectedSports, setSelectedSports] = useState([]);
+  const [selectedTeams, setSelectedTeams] = useState(fallbackTeams);
+  const [selectedPlayers, setSelectedPlayers] = useState([]);
+  const [timezone, setTimezone] = useState(browserTimezone());
 
-  useEffect(() => {
-    if (!sports.length) {
-      setLeagueState({ loading: false, error: '', leagues: [] });
-      return;
-    }
-
-    let isCurrent = true;
-    setLeagueState({ loading: true, error: '', leagues: visibleLeagueConfigs(sports) });
-
-    fetchLeagueDirectory(sports)
-      .then((leagues) => {
-        if (isCurrent) {
-          setLeagueState({ loading: false, error: '', leagues });
-        }
-      })
-      .catch((error) => {
-        if (isCurrent) {
-          setLeagueState({
-            loading: false,
-            error: error.message || 'Unable to load leagues right now.',
-            leagues: visibleLeagueConfigs(sports),
-          });
-        }
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [sports]);
-
-  const canContinue = step === 1 ? sports.length > 0 : teams.length > 0;
-
-  const finish = () => {
-    onComplete({ sports, teams, players, timezone });
-  };
+  const canContinue = step === 1 ? selectedSports.length > 0 : selectedTeams.length > 0;
 
   return (
     <main className="onboarding-screen">
@@ -276,58 +280,61 @@ function Onboarding({ onComplete }) {
 
         <div className="welcome-copy">
           <p className="eyebrow">Live setup</p>
-          <h1 id="welcome-title">{onboardingTitle(step)}</h1>
-          <p>{onboardingText(step)}</p>
+          <h1 id="welcome-title">{step === 1 ? 'Pick sports and confirm timezone.' : step === 2 ? 'Search real teams.' : 'Optionally add players.'}</h1>
+          <p>
+            {step === 1
+              ? 'Fieldwatch auto-detects your timezone and shows major competitions for every sport.'
+              : step === 2
+                ? 'Search TheSportsDB for teams across your selected sports, including FIFA World Cup coverage.'
+                : 'Player search is optional. You can add more later from the Players page.'}
+          </p>
         </div>
 
         {step === 1 && (
           <>
-            <SportGrid selectedSports={sports} setSelectedSports={setSports} />
-            <TimezoneField timezone={timezone} setTimezone={setTimezone} />
+            <SportGrid selectedSports={selectedSports} setSelectedSports={setSelectedSports} />
+            <div className="timezone-card">
+              <div>
+                <p className="eyebrow">Timezone detected</p>
+                <h3>{timezone}</h3>
+                <p>All fixtures and odds pages use your local match time.</p>
+              </div>
+              <label>
+                Change timezone
+                <input value={timezone} onChange={(event) => setTimezone(event.target.value)} />
+              </label>
+            </div>
+            <LeagueCoverage sports={selectedSports} />
           </>
         )}
         {step === 2 && (
-          <>
-            <LeaguePreview leagueState={leagueState} />
-            <LiveSearchPicker
-              label="Search teams across all selected sports"
-              mode="team"
-              onSelect={(team) => setTeams((currentTeams) => addUniqueItem(currentTeams, team))}
-              selectedItems={teams}
-              setSelectedItems={setTeams}
-              sports={sports}
-            />
-          </>
+          <LiveSearchPicker
+            label="Search teams"
+            mode="team"
+            onSelect={(team) => setSelectedTeams((current) => addUniqueItem(current, team))}
+            selectedItems={selectedTeams}
+            setSelectedItems={setSelectedTeams}
+            sports={selectedSports}
+          />
         )}
         {step === 3 && (
           <LiveSearchPicker
-            label="Search players across TheSportsDB"
+            label="Search players"
             mode="player"
             optional
-            onSelect={(player) => setPlayers((currentPlayers) => addUniqueItem(currentPlayers, player))}
-            selectedItems={players}
-            setSelectedItems={setPlayers}
-            sports={sports}
+            onSelect={(player) => setSelectedPlayers((current) => addUniqueItem(current, player))}
+            selectedItems={selectedPlayers}
+            setSelectedItems={setSelectedPlayers}
+            sports={selectedSports}
           />
         )}
 
         <div className="welcome-actions">
-          {step > 1 && (
-            <button className="button secondary" onClick={() => setStep((current) => current - 1)} type="button">
-              Back
-            </button>
-          )}
+          {step > 1 && <button className="button secondary" onClick={() => setStep((current) => current - 1)} type="button">Back</button>}
           {step < 3 ? (
-            <button
-              className="button primary"
-              disabled={!canContinue}
-              onClick={() => setStep((current) => current + 1)}
-              type="button"
-            >
-              Continue
-            </button>
+            <button className="button primary" disabled={!canContinue} onClick={() => setStep((current) => current + 1)} type="button">Continue</button>
           ) : (
-            <button className="button primary" onClick={finish} type="button">
+            <button className="button primary" onClick={() => onComplete({ sports: selectedSports, teams: selectedTeams, players: selectedPlayers, timezone })} type="button">
               Get started
             </button>
           )}
@@ -338,28 +345,24 @@ function Onboarding({ onComplete }) {
 }
 
 function SportGrid({ selectedSports, setSelectedSports }) {
-  const toggleSport = (sport) => {
-    setSelectedSports((currentSports) =>
-      currentSports.some((currentSport) => currentSport.id === sport.id)
-        ? currentSports.filter((currentSport) => currentSport.id !== sport.id)
-        : [...currentSports, sport],
+  const toggle = (sport) => {
+    setSelectedSports((current) =>
+      current.some((item) => item.id === sport.id)
+        ? current.filter((item) => item.id !== sport.id)
+        : [...current, sport],
     );
   };
 
   return (
-    <div className="sport-grid" aria-label="Pick sports">
-      {sportOptions.map((sport) => (
+    <div className="sport-grid">
+      {sports.map((sport) => (
         <button
-          className={
-            selectedSports.some((selectedSport) => selectedSport.id === sport.id)
-              ? 'sport-card is-selected'
-              : 'sport-card'
-          }
+          className={selectedSports.some((item) => item.id === sport.id) ? 'sport-card is-selected' : 'sport-card'}
           key={sport.id}
-          onClick={() => toggleSport(sport)}
+          onClick={() => toggle(sport)}
           type="button"
         >
-          <SportIcon sport={sport} />
+          <span className="sport-icon">{sport.icon}</span>
           <span>{sport.label}</span>
         </button>
       ))}
@@ -367,60 +370,33 @@ function SportGrid({ selectedSports, setSelectedSports }) {
   );
 }
 
-function TimezoneField({ setTimezone, timezone }) {
-  return (
-    <div className="timezone-card">
-      <div>
-        <p className="eyebrow">Timezone detected</p>
-        <h3>{timezone}</h3>
-        <p>Match times are converted with your browser&apos;s timezone detection.</p>
-      </div>
-      <label>
-        Change timezone
-        <input
-          onChange={(event) => setTimezone(event.target.value)}
-          placeholder="Europe/London"
-          type="text"
-          value={timezone}
-        />
-      </label>
-    </div>
-  );
-}
+function LeagueCoverage({ sports: selectedSports }) {
+  if (!selectedSports.length) return null;
 
-function LeaguePreview({ leagueState }) {
   return (
     <div className="league-panel">
       <div>
-        <p className="eyebrow">Major leagues visible</p>
-        <h3>Coverage from TheSportsDB</h3>
+        <p className="eyebrow">Competitions visible</p>
+        <h3>Major coverage by sport</h3>
       </div>
-      {leagueState.loading && <p className="notice">Loading live league directory...</p>}
-      {leagueState.error && <p className="error-text">{leagueState.error}</p>}
       <div className="league-grid">
-        {leagueState.leagues.map((league) => (
-          <article className="league-card" key={`${league.sportId}-${league.name}`}>
-            <span>{sportLabel(league.sportId)}</span>
-            <strong>{league.name}</strong>
-            <small>{league.id ? `TheSportsDB ID ${league.id}` : 'Configured fallback'}</small>
-          </article>
-        ))}
+        {selectedSports.flatMap((sport) =>
+          sport.leagues.map((league) => (
+            <article className="league-card" key={`${sport.id}-${league}`}>
+              <span>{sport.label}</span>
+              <strong>{league}</strong>
+              <small>{league === 'FIFA World Cup 2026' ? 'ESPN fifa.world scoreboard + NewsAPI' : 'TheSportsDB + ESPN where available'}</small>
+            </article>
+          )),
+        )}
       </div>
     </div>
   );
 }
 
-function LiveSearchPicker({
-  label,
-  mode,
-  onSelect,
-  optional = false,
-  selectedItems,
-  setSelectedItems,
-  sports,
-}) {
+function LiveSearchPicker({ label, mode, onSelect, optional = false, selectedItems, setSelectedItems, sports: selectedSports }) {
   const [query, setQuery] = useState('');
-  const search = useLiveSearch(query, mode, sports);
+  const search = useLiveSearch(query, mode, selectedSports);
 
   return (
     <div className="picker">
@@ -430,12 +406,11 @@ function LiveSearchPicker({
       </label>
       <div className="input-wrap">
         <input
-          autoComplete="off"
           id={`${mode}-search`}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={mode === 'team' ? 'Try Arsenal, Spain, Lakers...' : 'Try Saka, Messi, Curry...'}
-          type="search"
           value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder={mode === 'team' ? 'Try Arsenal, Spain, Lakers...' : 'Try Messi, Saka, Curry...'}
+          type="search"
         />
         {query && (
           <SearchDropdown
@@ -450,23 +425,34 @@ function LiveSearchPicker({
           />
         )}
       </div>
-      <SelectedItems items={selectedItems} mode={mode} setItems={setSelectedItems} optional={optional} />
+      <div className="selected-list">
+        {selectedItems.length ? (
+          selectedItems.map((item) => (
+            <button key={item.id} onClick={() => setSelectedItems((current) => current.filter((candidate) => candidate.id !== item.id))} type="button">
+              {item.name}
+              <span>Remove</span>
+            </button>
+          ))
+        ) : (
+          <p>{optional ? `No ${mode}s selected yet.` : `Search and select at least one ${mode}.`}</p>
+        )}
+      </div>
     </div>
   );
 }
 
 function SearchDropdown({ error, loading, mode, onSelect, results }) {
   return (
-    <div className="dropdown" role="listbox">
-      {loading && <p className="notice">Searching TheSportsDB...</p>}
+    <div className="dropdown">
+      {loading && <p className="notice">Searching live sources...</p>}
       {error && <p className="error-text">{error}</p>}
-      {!loading && !error && results.length === 0 && <p>No live results found</p>}
+      {!loading && !error && !results.length && <p>No live results found</p>}
       {results.map((item) => (
-        <button key={item.id} onClick={() => onSelect(item)} type="button">
-          <SportIcon sport={sportFromApi(item.sport)} compact />
+        <button key={`${mode}-${item.id}`} onClick={() => onSelect(item)} type="button">
+          <span className="sport-icon compact">{sportIcon(item.sport)}</span>
           <span>
             <strong>{item.name}</strong>
-            <small>{itemMeta(item, mode)}</small>
+            <small>{item.meta || item.league || item.sport}</small>
           </span>
         </button>
       ))}
@@ -474,120 +460,74 @@ function SearchDropdown({ error, loading, mode, onSelect, results }) {
   );
 }
 
-function SelectedItems({ items, mode, optional, setItems }) {
-  return (
-    <div className="selected-list">
-      {items.length ? (
-        items.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setItems((currentItems) => currentItems.filter((currentItem) => currentItem.id !== item.id))}
-            type="button"
-          >
-            {item.name}
-            <span>Remove</span>
-          </button>
-        ))
-      ) : (
-        <p>{optional ? `No ${mode}s selected yet. You can skip this.` : `Search and select at least one ${mode}.`}</p>
-      )}
-    </div>
-  );
-}
-
-function Feed({
-  eventState,
-  followedTeamNames,
-  onAddWatchlist,
-  onFollowWatchlist,
-  onRemoveWatchlist,
-  profile,
-  teamEvents,
-  watchlist,
-}) {
+function Feed({ data, onAddWatchlist, onFollowWatchlist, onOpenFixture, onOpenTeam, onRemoveWatchlist, profile, status, upcomingFixtures, watchlist }) {
   const [teamFilter, setTeamFilter] = useState('All');
   const [categoryFilter, setCategoryFilter] = useState('All');
-
-  const recentCards = useMemo(
-    () => teamEvents.recent.map((event) => eventToFeedCard(event, profile.timezone)),
-    [profile.timezone, teamEvents.recent],
-  );
-  const upcomingCards = useMemo(
-    () => teamEvents.upcoming.map((event) => eventToUpcomingCard(event, profile.timezone)),
-    [profile.timezone, teamEvents.upcoming],
-  );
-  const feedCards = [...upcomingCards, ...recentCards]
-    .filter((card) => teamFilter === 'All' || card.team === teamFilter)
-    .filter((card) => categoryFilter === 'All' || card.category === categoryFilter)
-    .sort((a, b) => new Date(b.sortDate) - new Date(a.sortDate));
+  const followedTeams = profile.teams.map((team) => team.name);
+  const articleCards = data.news
+    .filter((article) => teamFilter === 'All' || article.relatedTeams.includes(teamFilter))
+    .filter(() => categoryFilter === 'All' || categoryFilter === 'News')
+    .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+  const fixtureCards = upcomingFixtures
+    .filter((fixture) => teamFilter === 'All' || fixture.homeTeam === teamFilter || fixture.awayTeam === teamFilter)
+    .filter(() => categoryFilter === 'All' || categoryFilter === 'Upcoming')
+    .slice(0, 8);
 
   return (
     <section className="page-view feed-layout">
       <div className="feed-main">
-        <PageHeading eyebrow="Live feed" title="Feed" meta={`${feedCards.length} live items`} />
-        <StatusBlock loading={eventState.loading} error={eventState.error} />
+        <FixtureBar fixtures={upcomingFixtures} oddsMap={data.odds} onAddWatchlist={onAddWatchlist} onOpenFixture={onOpenFixture} profile={profile} watchlist={watchlist} />
+        <PageHeading eyebrow="Real sports news" title="Feed" meta={`${articleCards.length} articles`} />
+        <StatusBlock status={status} />
+        <Filters categories={categories} categoryFilter={categoryFilter} followedTeams={followedTeams} setCategoryFilter={setCategoryFilter} setTeamFilter={setTeamFilter} teamFilter={teamFilter} />
 
-        <div className="filters" aria-label="Feed filters">
+        <section className="upcoming-panel">
           <div>
-            <p>Followed teams</p>
-            <div className="chip-row">
-              {['All', ...followedTeamNames].map((team) => (
-                <button
-                  className={teamFilter === team ? 'chip is-active' : 'chip'}
-                  key={team}
-                  onClick={() => setTeamFilter(team)}
-                  type="button"
-                >
-                  {team}
-                </button>
-              ))}
-            </div>
+            <p className="eyebrow">Upcoming events</p>
+            <h3>Fixtures from followed teams</h3>
           </div>
-          <div>
-            <p>Categories</p>
-            <div className="chip-row">
-              {categories.map((category) => (
-                <button
-                  className={categoryFilter === category ? 'pill is-active' : 'pill'}
-                  key={category}
-                  onClick={() => setCategoryFilter(category)}
-                  type="button"
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
+          <div className="upcoming-grid">
+            {fixtureCards.length ? (
+              fixtureCards.map((fixture) => (
+                <FixtureMiniCard
+                  fixture={fixture}
+                  key={fixture.id}
+                  odds={data.odds[fixture.id]}
+                  onAddWatchlist={onAddWatchlist}
+                  onOpenFixture={onOpenFixture}
+                  profile={profile}
+                  watchlist={watchlist}
+                />
+              ))
+            ) : (
+              <p className="notice">No upcoming fixtures returned yet.</p>
+            )}
           </div>
-        </div>
-
-        <UpcomingStrip
-          events={teamEvents.upcoming}
-          onAddWatchlist={onAddWatchlist}
-          profile={profile}
-          watchlist={watchlist}
-        />
+        </section>
 
         <div className="news-stack">
-          {feedCards.length ? (
-            feedCards.map((card) => (
-              <article className="news-card" key={card.id}>
+          {articleCards.length ? (
+            articleCards.map((article) => (
+              <article className="news-card" key={article.id}>
                 <div className="news-meta">
-                  <strong>{card.team}</strong>
-                  <span className="badge">{card.category}</span>
-                  <span>{card.timeAgo}</span>
+                  <strong>{article.source}</strong>
+                  <span className="badge">News</span>
+                  <span>{formatDateTime(article.publishedAt, profile.timezone)}</span>
                 </div>
-                <h3>{card.headline}</h3>
-                <p>{card.snippet}</p>
+                <h3>{article.title}</h3>
+                <p>{article.description || 'Open the article for the latest report.'}</p>
                 <div className="news-actions">
-                  <a href={card.url} rel="noreferrer" target="_blank">
-                    Open event &rarr;
-                  </a>
-                  <WatchButton item={card.watchItem} onAdd={onAddWatchlist} profile={profile} watchlist={watchlist} />
+                  <a href={article.url} rel="noreferrer" target="_blank">Read article &rarr;</a>
+                  {article.relatedTeams[0] && (
+                    <button type="button" onClick={() => onOpenTeam(profile.teams.find((team) => team.name === article.relatedTeams[0]) || { name: article.relatedTeams[0], type: 'team' })}>
+                      Team page
+                    </button>
+                  )}
                 </div>
               </article>
             ))
           ) : (
-            <div className="empty-card">No live feed items yet. Try following a team from search.</div>
+            <div className="empty-card">No relevant articles from the last 7 days yet.</div>
           )}
         </div>
       </div>
@@ -595,6 +535,8 @@ function Feed({
       <Watchlist
         onAdd={onAddWatchlist}
         onFollow={onFollowWatchlist}
+        onOpenFixture={onOpenFixture}
+        onOpenTeam={onOpenTeam}
         onRemove={onRemoveWatchlist}
         profile={profile}
         watchlist={watchlist}
@@ -603,61 +545,191 @@ function Feed({
   );
 }
 
-function UpcomingStrip({ events, onAddWatchlist, profile, watchlist }) {
-  const nextEvents = events.slice(0, 4);
-
+function FixtureBar({ fixtures, oddsMap, onAddWatchlist, onOpenFixture, profile, watchlist }) {
   return (
-    <section className="upcoming-panel">
-      <div>
-        <p className="eyebrow">Upcoming events</p>
-        <h3>Next fixtures for followed teams</h3>
-      </div>
-      {nextEvents.length ? (
-        <div className="upcoming-grid">
-          {nextEvents.map((event) => (
-            <article className="upcoming-card" key={event.id}>
-              <strong>{event.name}</strong>
-              <span>{formatEventDate(event, profile.timezone)}</span>
-              <small>{event.league}</small>
-              <WatchButton item={eventToWatchItem(event)} onAdd={onAddWatchlist} profile={profile} watchlist={watchlist} />
-            </article>
-          ))}
-        </div>
-      ) : (
-        <p className="notice">No upcoming live fixtures returned yet.</p>
-      )}
+    <section className="fixture-bar" aria-label="Next fixtures">
+      {fixtures.slice(0, 12).map((fixture) => (
+        <article className="fixture-chip" key={fixture.id}>
+          <button onClick={() => onOpenFixture(fixture)} type="button">
+            <strong>{fixture.shortName}</strong>
+            <span>{fixture.competition}</span>
+            <small>{formatDateTime(fixture.date, profile.timezone)}</small>
+            <OddsPreview fixture={fixture} odds={oddsMap[fixture.id]} />
+          </button>
+          <WatchButton item={fixtureToWatchItem(fixture)} onAdd={onAddWatchlist} profile={profile} watchlist={watchlist} />
+        </article>
+      ))}
+      {!fixtures.length && <p className="notice">No upcoming fixtures loaded yet.</p>}
     </section>
   );
 }
 
-function Watchlist({ onAdd, onFollow, onRemove, profile, watchlist }) {
+function FixtureMiniCard({ fixture, odds, onAddWatchlist, onOpenFixture, profile, watchlist }) {
   return (
-    <aside className="watchlist" aria-label="Watchlist">
+    <article className="upcoming-card">
+      <strong>{fixture.name}</strong>
+      <span>{fixture.competition}</span>
+      <small>{formatDateTime(fixture.date, profile.timezone)}</small>
+      <small>{fixture.venue || 'Venue TBA'}</small>
+      <OddsPreview fixture={fixture} odds={odds} />
+      <div className="card-actions">
+        <button onClick={() => onOpenFixture(fixture)} type="button">Fixture page</button>
+        <WatchButton item={fixtureToWatchItem(fixture)} onAdd={onAddWatchlist} profile={profile} watchlist={watchlist} />
+      </div>
+    </article>
+  );
+}
+
+function Schedule({ data, onAddWatchlist, onOpenFixture, profile, status, watchlist }) {
+  const week = getCurrentWeek(profile.timezone);
+  const byDay = groupFixturesByDay(data.fixtures, profile.timezone);
+
+  return (
+    <section className="page-view">
+      <PageHeading eyebrow="Real fixtures" title="Schedule" meta={profile.timezone} />
+      <StatusBlock status={status} />
+      <div className="calendar">
+        {week.map((day) => (
+          <section className={day.isToday ? 'day-column today' : 'day-column'} key={day.isoDate}>
+            <header>
+              <span>{day.dayName}</span>
+              <strong>{day.label}</strong>
+            </header>
+            <div className="match-list">
+              {(byDay[day.isoDate] || []).length ? (
+                byDay[day.isoDate].map((fixture) => (
+                  <article className="match-card" key={fixture.id}>
+                    <h3>{fixture.name}</h3>
+                    <strong>{fixture.completed ? fixture.score || 'Final' : formatTime(fixture.date, profile.timezone)}</strong>
+                    <p>{fixture.competition}</p>
+                    <span>{fixture.venue || 'Venue TBA'}</span>
+                    <OddsPreview fixture={fixture} odds={data.odds[fixture.id]} />
+                    <div className="card-actions">
+                      <button onClick={() => onOpenFixture(fixture)} type="button">Details</button>
+                      <WatchButton item={fixtureToWatchItem(fixture)} onAdd={onAddWatchlist} profile={profile} watchlist={watchlist} />
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <p className="no-matches">No matches</p>
+              )}
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FixtureDetail({ fixture, news, odds, onBack, onOpenTeam, profile }) {
+  const detail = useFixtureDetail(fixture, news, profile.timezone);
+  const relatedNews = newsForFixture(news, fixture).slice(0, 6);
+
+  return (
+    <section className="page-view detail-page">
+      <button className="button secondary" onClick={onBack} type="button">Back</button>
+      <article className="detail-hero">
+        <p className="eyebrow">{fixture.competition}</p>
+        <h2>{fixture.name}</h2>
+        <p>{formatDateTime(fixture.date, profile.timezone)} · {fixture.venue || 'Venue TBA'}</p>
+        <strong>{fixture.completed ? fixture.score || 'Final' : fixture.status || 'Upcoming'}</strong>
+      </article>
+
+      <div className="detail-grid">
+        <DetailPanel title="Who to watch" loading={detail.loadingPlayers} error={detail.playerError}>
+          <div className="player-grid compact-grid">
+            {detail.players.map((player) => (
+              <article className="player-card" key={player.id}>
+                <div className="avatar">{initials(player.name)}</div>
+                <h4>{player.name}</h4>
+                <p>{player.position || player.team || 'Player'}</p>
+                <span>{player.team}</span>
+              </article>
+            ))}
+          </div>
+        </DetailPanel>
+
+        <DetailPanel title="Betting odds">
+          <OddsTable odds={odds} fixture={fixture} />
+        </DetailPanel>
+
+        <DetailPanel title="Latest news">
+          <NewsList articles={relatedNews} timezone={profile.timezone} />
+        </DetailPanel>
+
+        <DetailPanel title="Recent form" loading={detail.loadingForms} error={detail.formError}>
+          <div className="form-grid">
+            {[fixture.homeTeam, fixture.awayTeam].filter(Boolean).map((teamName) => (
+              <article className="form-card" key={teamName}>
+                <button onClick={() => onOpenTeam({ name: teamName, type: 'team' })} type="button">{teamName}</button>
+                {(detail.forms[teamName] || []).slice(0, 5).map((item) => (
+                  <span key={item.id}>{item.name}: {item.score || item.status || 'Played'}</span>
+                ))}
+                {!(detail.forms[teamName] || []).length && <span>No recent form returned.</span>}
+              </article>
+            ))}
+          </div>
+        </DetailPanel>
+      </div>
+    </section>
+  );
+}
+
+function TeamPage({ fixtures, news, onBack, onOpenFixture, profile, team }) {
+  const teamFixtures = fixtures.filter((fixture) => includesTeam(fixture, team.name));
+  const teamNews = news.filter((article) => article.relatedTeams.includes(team.name)).slice(0, 8);
+
+  return (
+    <section className="page-view detail-page">
+      <button className="button secondary" onClick={onBack} type="button">Back</button>
+      <article className="detail-hero">
+        <p className="eyebrow">{team.league || team.meta || 'Team page'}</p>
+        <h2>{team.name}</h2>
+        <p>{team.sport || 'Live sports'} · Fixtures and latest NewsAPI articles</p>
+      </article>
+      <div className="detail-grid">
+        <DetailPanel title="Fixtures">
+          <div className="match-list">
+            {teamFixtures.map((fixture) => (
+              <button className="team-fixture" key={fixture.id} onClick={() => onOpenFixture(fixture)} type="button">
+                <strong>{fixture.name}</strong>
+                <span>{fixture.competition} · {formatDateTime(fixture.date, profile.timezone)}</span>
+              </button>
+            ))}
+            {!teamFixtures.length && <p className="notice">No fixtures returned for this team yet.</p>}
+          </div>
+        </DetailPanel>
+        <DetailPanel title="Latest news">
+          <NewsList articles={teamNews} timezone={profile.timezone} />
+        </DetailPanel>
+      </div>
+    </section>
+  );
+}
+
+function Watchlist({ onAdd, onFollow, onOpenFixture, onOpenTeam, onRemove, profile, watchlist }) {
+  return (
+    <aside className="watchlist">
       <div className="watchlist-head">
         <h2>Watchlist</h2>
         <span>{watchlist.length}</span>
       </div>
-      <GlobalWatchlistSearch onAdd={onAdd} profile={profile} watchlist={watchlist} />
+      <GlobalSearch onAdd={onAdd} profile={profile} watchlist={watchlist} />
       {watchlist.length ? (
         <div className="watchlist-items">
           {watchlist.map((item) => (
-            <article className="watchlist-card" key={item.id}>
-              <button
-                aria-label={`Remove ${item.name}`}
-                className="x-button"
-                onClick={() => onRemove(item.id)}
-                type="button"
-              >
-                X
+            <article className="watchlist-card clickable" key={item.id}>
+              <button className="x-button" onClick={() => onRemove(item.id)} type="button" aria-label={`Remove ${item.name}`}>X</button>
+              <button className="watch-main" onClick={() => (item.type === 'fixture' ? onOpenFixture(item.fixture) : onOpenTeam(item))} type="button">
+                <span>{item.type}</span>
+                <strong>{item.name}</strong>
+                <p>{item.meta}</p>
               </button>
-              <span>{item.type}</span>
-              <strong>{item.name}</strong>
-              <p>{item.meta}</p>
-              {item.type !== 'event' && (
-                <button className="follow-button" onClick={() => onFollow(item)} type="button">
-                  Follow
-                </button>
-              )}
+              <div className="watch-actions">
+                {item.type !== 'fixture' && <button onClick={() => onFollow(item)} type="button">Follow</button>}
+                <button onClick={() => (item.type === 'fixture' ? onOpenFixture(item.fixture) : onOpenTeam(item))} type="button">View fixtures</button>
+                <button onClick={() => onOpenTeam(item.type === 'fixture' ? { name: item.fixture.homeTeam, type: 'team' } : item)} type="button">Latest news</button>
+              </div>
             </article>
           ))}
         </div>
@@ -668,142 +740,49 @@ function Watchlist({ onAdd, onFollow, onRemove, profile, watchlist }) {
   );
 }
 
-function GlobalWatchlistSearch({ onAdd, profile, watchlist }) {
+function GlobalSearch({ onAdd, profile, watchlist }) {
   const [query, setQuery] = useState('');
-  const search = useLiveSearch(query, 'all', sportOptions);
-
+  const search = useLiveSearch(query, 'all', sports);
   return (
     <div className="watch-search">
-      <label htmlFor="watchlist-search">Search everything</label>
-      <input
-        autoComplete="off"
-        id="watchlist-search"
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="Teams and players across all sports"
-        type="search"
-        value={query}
-      />
+      <label htmlFor="watch-search">Search everything</label>
+      <input id="watch-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Teams and players" type="search" />
       {query && (
         <SearchDropdown
           error={search.error}
           loading={search.loading}
           mode="all"
           onSelect={(item) => {
-            onAdd(searchItemToWatchItem(item));
+            onAdd(item);
             setQuery('');
           }}
-          results={search.results.filter(
-            (item) => !isFollowing(searchItemToWatchItem(item), profile) && !watchlist.some((entry) => entry.id === item.id),
-          )}
+          results={search.results.filter((item) => !isFollowing(item, profile) && !watchlist.some((entry) => entry.id === item.id))}
         />
       )}
     </div>
   );
 }
 
-function Schedule({ eventState, events, timezone }) {
-  const week = getCurrentWeek(timezone);
-  const eventsByDay = groupEventsByDay(events, timezone);
-
-  return (
-    <section className="page-view">
-      <PageHeading eyebrow="Real fixtures" title="Schedule" meta={timezone} />
-      <StatusBlock loading={eventState.loading} error={eventState.error} />
-      <div className="calendar" aria-label="Weekly match calendar">
-        {week.map((day) => {
-          const dayEvents = eventsByDay[day.isoDate] ?? [];
-          return (
-            <section className={day.isToday ? 'day-column today' : 'day-column'} key={day.isoDate}>
-              <header>
-                <span>{day.dayName}</span>
-                <strong>{day.label}</strong>
-              </header>
-              <div className="match-list">
-                {dayEvents.length ? (
-                  dayEvents.map((event) => (
-                    <article className="match-card" key={event.id}>
-                      <h3>{event.name}</h3>
-                      <strong>{formatEventTime(event, timezone)}</strong>
-                      <p>{event.league}</p>
-                      <span>{event.venue || 'Venue TBA'}</span>
-                    </article>
-                  ))
-                ) : (
-                  <p className="no-matches">No matches</p>
-                )}
-              </div>
-            </section>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
 function Players({ followedPlayerIds, onAddWatchlist, onFollowPlayer, profile, watchlist }) {
   const [query, setQuery] = useState('');
   const search = useLiveSearch(query, 'player', profile.sports);
-  const suggestedPlayers = search.results
-    .filter((player) => !followedPlayerIds.includes(player.id))
-    .slice(0, 6);
+  const suggestions = search.results.filter((player) => !followedPlayerIds.includes(player.id)).slice(0, 6);
 
   return (
     <section className="page-view players-page">
-      <PageHeading eyebrow="Live player search" title="Players" />
+      <PageHeading eyebrow="TheSportsDB players" title="Players" />
       <div className="player-search">
-        <label htmlFor="player-live-search">Search players</label>
-        <input
-          autoComplete="off"
-          id="player-live-search"
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Find a player by name, team, or sport"
-          type="search"
-          value={query}
-        />
-        {query && (
-          <SearchDropdown
-            error={search.error}
-            loading={search.loading}
-            mode="player"
-            onSelect={(player) => onFollowPlayer(player)}
-            results={search.results}
-          />
-        )}
+        <label htmlFor="player-search">Search players</label>
+        <input id="player-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search any player" type="search" />
+        {query && <SearchDropdown error={search.error} loading={search.loading} mode="player" onSelect={onFollowPlayer} results={search.results} />}
       </div>
-
-      <PlayerSection
-        emptyText="Use search above to follow live players."
-        followedPlayerIds={followedPlayerIds}
-        onAddWatchlist={onAddWatchlist}
-        onFollowPlayer={onFollowPlayer}
-        players={profile.players}
-        profile={profile}
-        title="Followed players"
-        watchlist={watchlist}
-      />
-      <PlayerSection
-        followedPlayerIds={followedPlayerIds}
-        onAddWatchlist={onAddWatchlist}
-        onFollowPlayer={onFollowPlayer}
-        players={suggestedPlayers}
-        profile={profile}
-        title={query ? 'Suggested from search' : 'Suggested players'}
-        watchlist={watchlist}
-      />
+      <PlayerGrid title="Followed players" players={profile.players} followedPlayerIds={followedPlayerIds} onAddWatchlist={onAddWatchlist} onFollowPlayer={onFollowPlayer} profile={profile} watchlist={watchlist} />
+      <PlayerGrid title={query ? 'Suggested from search' : 'Suggested players'} players={suggestions} followedPlayerIds={followedPlayerIds} onAddWatchlist={onAddWatchlist} onFollowPlayer={onFollowPlayer} profile={profile} watchlist={watchlist} />
     </section>
   );
 }
 
-function PlayerSection({
-  emptyText = 'Search for players to populate this section.',
-  followedPlayerIds,
-  onAddWatchlist,
-  onFollowPlayer,
-  players,
-  profile,
-  title,
-  watchlist,
-}) {
+function PlayerGrid({ title, players, followedPlayerIds, onAddWatchlist, onFollowPlayer, profile, watchlist }) {
   return (
     <section className="player-section">
       <h3>{title}</h3>
@@ -811,40 +790,106 @@ function PlayerSection({
         <div className="player-grid">
           {players.map((player) => (
             <article className="player-card" key={player.id}>
-              <div className="avatar" aria-hidden="true">
-                {initials(player.name)}
-              </div>
-              <div>
-                <h4>{player.name}</h4>
-                <p>{player.position || player.sport || 'Player'}</p>
-                <span>{player.team || player.league || 'TheSportsDB'}</span>
-              </div>
-              <small>{player.nationality || player.sport || 'Live player profile'}</small>
+              <div className="avatar">{initials(player.name)}</div>
+              <h4>{player.name}</h4>
+              <p>{player.position || player.sport || 'Player'}</p>
+              <span>{player.team || player.league || 'TheSportsDB'}</span>
               <div className="card-actions">
-                <button onClick={() => onFollowPlayer(player)} type="button">
-                  {followedPlayerIds.includes(player.id) ? 'Following' : 'Follow'}
-                </button>
-                <WatchButton item={playerToWatchItem(player)} onAdd={onAddWatchlist} profile={profile} watchlist={watchlist} />
+                <button onClick={() => onFollowPlayer(player)} type="button">{followedPlayerIds.includes(player.id) ? 'Following' : 'Follow'}</button>
+                <WatchButton item={player} onAdd={onAddWatchlist} profile={profile} watchlist={watchlist} />
               </div>
             </article>
           ))}
         </div>
       ) : (
-        <div className="empty-card">{emptyText}</div>
+        <div className="empty-card">Search to add players.</div>
       )}
     </section>
   );
 }
 
-function StatusBlock({ error, loading }) {
-  if (loading) {
-    return <p className="notice status">Loading live data from TheSportsDB...</p>;
-  }
+function Filters({ categories: items, categoryFilter, followedTeams, setCategoryFilter, setTeamFilter, teamFilter }) {
+  return (
+    <div className="filters">
+      <div>
+        <p>Followed teams</p>
+        <div className="chip-row">
+          {['All', ...followedTeams].map((team) => (
+            <button className={teamFilter === team ? 'chip is-active' : 'chip'} key={team} onClick={() => setTeamFilter(team)} type="button">{team}</button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p>Categories</p>
+        <div className="chip-row">
+          {items.map((category) => (
+            <button className={categoryFilter === category ? 'pill is-active' : 'pill'} key={category} onClick={() => setCategoryFilter(category)} type="button">{category}</button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  if (error) {
-    return <p className="error-text status">{error}</p>;
-  }
+function DetailPanel({ children, error, loading, title }) {
+  return (
+    <section className="detail-panel">
+      <h3>{title}</h3>
+      {loading && <p className="notice">Loading...</p>}
+      {error && <p className="error-text">{error}</p>}
+      {!loading && children}
+    </section>
+  );
+}
 
+function NewsList({ articles, timezone }) {
+  return articles.length ? (
+    <div className="news-list-compact">
+      {articles.map((article) => (
+        <a href={article.url} key={article.id} rel="noreferrer" target="_blank">
+          <strong>{article.title}</strong>
+          <span>{article.source} · {formatDateTime(article.publishedAt, timezone)}</span>
+        </a>
+      ))}
+    </div>
+  ) : (
+    <p className="notice">No matching NewsAPI articles returned yet.</p>
+  );
+}
+
+function OddsPreview({ fixture, odds }) {
+  const market = odds?.markets?.h2h?.[0];
+  if (!market) return <span className="odds-preview">Odds unavailable</span>;
+  return (
+    <span className="odds-preview">
+      {market.bookmaker}: {market.outcomes.slice(0, fixture.sport === 'Soccer' ? 3 : 2).map((item) => `${shortName(item.name)} ${item.price}`).join(' · ')}
+    </span>
+  );
+}
+
+function OddsTable({ odds, fixture }) {
+  if (!odds?.markets) return <p className="notice">Odds unavailable for this fixture.</p>;
+  return (
+    <div className="odds-table">
+      {['h2h', 'btts', 'totals'].map((marketKey) => (
+        <section key={marketKey}>
+          <h4>{marketLabel(marketKey, fixture)}</h4>
+          {(odds.markets[marketKey] || []).map((market) => (
+            <article key={`${market.bookmaker}-${marketKey}`}>
+              <strong>{market.bookmaker}</strong>
+              <div>{market.outcomes.map((outcome) => <span key={`${market.bookmaker}-${marketKey}-${outcome.name}`}>{outcome.name}: {outcome.price}</span>)}</div>
+            </article>
+          ))}
+          {!(odds.markets[marketKey] || []).length && <p>No {marketLabel(marketKey, fixture).toLowerCase()} market returned.</p>}
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function StatusBlock({ status }) {
+  if (status.loading) return <p className="notice status">Loading NewsAPI, ESPN, TheSportsDB, and Odds API data...</p>;
+  if (status.errors.length) return <div className="status-list">{status.errors.map((error) => <p className="error-text" key={error}>{error}</p>)}</div>;
   return null;
 }
 
@@ -861,479 +906,320 @@ function PageHeading({ eyebrow, meta, title }) {
 }
 
 function WatchButton({ item, onAdd, profile, watchlist }) {
-  const alreadyFollowing = item.type !== 'event' && isFollowing(item, profile);
-  const alreadyWatching = watchlist.some((entry) => entry.id === item.id);
-
-  return (
-    <button disabled={alreadyFollowing || alreadyWatching} onClick={() => onAdd(item)} type="button">
-      {alreadyFollowing ? 'Following' : alreadyWatching ? 'In watchlist' : 'Add to watchlist'}
-    </button>
-  );
+  const disabled = watchlist.some((entry) => entry.id === item.id) || isFollowing(item, profile);
+  return <button disabled={disabled} onClick={() => onAdd(item)} type="button">{disabled ? 'Added' : 'Add to watchlist'}</button>;
 }
 
-function SportIcon({ compact = false, sport }) {
-  const safeSport = sport?.label ? sport : sportOptions.find((option) => option.id === sport?.id) ?? sportOptions[0];
-
-  return (
-    <span className={compact ? 'sport-icon compact' : 'sport-icon'} aria-hidden="true">
-      {safeSport.icon}
-    </span>
-  );
-}
-
-function useLiveSearch(query, mode, sports) {
+function useLiveSearch(query, mode, selectedSports) {
   const [state, setState] = useState({ loading: false, error: '', results: [] });
-
   useEffect(() => {
-    const trimmedQuery = query.trim();
-    if (trimmedQuery.length < 2) {
+    if (query.trim().length < 2) {
       setState({ loading: false, error: '', results: [] });
       return undefined;
     }
-
-    let isCurrent = true;
-    setState({ loading: true, error: '', results: [] });
-
+    let active = true;
     const timer = window.setTimeout(() => {
-      searchSportsDb(trimmedQuery, mode, sports)
-        .then((results) => {
-          if (isCurrent) {
-            setState({ loading: false, error: '', results });
-          }
-        })
-        .catch((error) => {
-          if (isCurrent) {
-            setState({
-              loading: false,
-              error: error.message || 'Search failed. Please try again.',
-              results: [],
-            });
-          }
-        });
+      setState({ loading: true, error: '', results: [] });
+      searchLive(query.trim(), mode, selectedSports)
+        .then((results) => active && setState({ loading: false, error: '', results }))
+        .catch((error) => active && setState({ loading: false, error: error.message || 'Search failed.', results: [] }));
     }, SEARCH_DELAY);
-
     return () => {
-      isCurrent = false;
+      active = false;
       window.clearTimeout(timer);
     };
-  }, [mode, query, sports]);
-
+  }, [mode, query, selectedSports]);
   return state;
 }
 
-async function searchSportsDb(query, mode, sports) {
-  const shouldSearchTeams = mode === 'team' || mode === 'all';
-  const shouldSearchPlayers = mode === 'player' || mode === 'all';
-  const requests = [];
-
-  if (shouldSearchTeams) {
-    requests.push(apiGet('searchteams.php', { t: query }).then((data) => (data.teams ?? []).map(liveTeam)));
-  }
-
-  if (shouldSearchPlayers) {
-    requests.push(apiGet('searchplayers.php', { p: query }).then((data) => (data.player ?? []).map(livePlayer)));
-  }
-
-  const settledResults = await Promise.allSettled(requests);
-  const results = settledResults
-    .filter((result) => result.status === 'fulfilled')
-    .flatMap((result) => result.value);
-
-  if (!results.length && settledResults.some((result) => result.status === 'rejected')) {
-    throw new Error('TheSportsDB search is temporarily unavailable.');
-  }
-
-  const allowedSports = new Set((sports ?? []).map((sport) => sport.apiSport).filter(Boolean));
-  const filteredResults = allowedSports.size
-    ? results.filter((item) => allowedSports.has(item.sport) || mode === 'all')
-    : results;
-
-  return uniqueById(filteredResults).slice(0, 10);
-}
-
-async function fetchLeagueDirectory(selectedSports) {
-  const allLeagueData = await apiGet('all_leagues.php');
-  const allLeagues = allLeagueData.leagues ?? [];
-
-  return visibleLeagueConfigs(selectedSports).map((config) => {
-    const liveLeague = allLeagues.find((league) => {
-      const liveName = league.strLeague?.toLowerCase() ?? '';
-      return liveName === config.name.toLowerCase() || liveName.includes(config.name.toLowerCase());
-    });
-
-    return {
-      ...config,
-      id: liveLeague?.idLeague ?? config.fallbackId,
-      apiSport: liveLeague?.strSport ?? config.apiSport,
+function useFixtureDetail(fixture, news, timezone) {
+  const [state, setState] = useState({ loadingPlayers: false, loadingForms: false, playerError: '', formError: '', players: [], forms: {} });
+  useEffect(() => {
+    let active = true;
+    setState({ loadingPlayers: true, loadingForms: true, playerError: '', formError: '', players: [], forms: {} });
+    Promise.allSettled([fetchKeyPlayers(fixture), fetchRecentForm(fixture)])
+      .then(([playersResult, formsResult]) => {
+        if (!active) return;
+        setState({
+          loadingPlayers: false,
+          loadingForms: false,
+          playerError: playersResult.status === 'rejected' ? playersResult.reason.message : '',
+          formError: formsResult.status === 'rejected' ? formsResult.reason.message : '',
+          players: playersResult.status === 'fulfilled' ? playersResult.value : [],
+          forms: formsResult.status === 'fulfilled' ? formsResult.value : {},
+        });
+      });
+    return () => {
+      active = false;
     };
-  });
+  }, [fixture, news, timezone]);
+  return state;
 }
 
-async function fetchFollowedTeamEvents(teams) {
-  const teamsWithIds = teams.filter((team) => team.id);
-  const upcomingLists = await Promise.all(
-    teamsWithIds.map((team) =>
-      apiGet('eventsnext.php', { id: team.id })
-        .then((data) => (data.events ?? []).map((event) => liveEvent(event, team)))
-        .catch(() => []),
-    ),
+async function loadDashboardData(profile) {
+  const errors = [];
+  const fixtureResult = await settle(fetchFixtures(profile));
+  if (fixtureResult.error) errors.push(fixtureResult.error);
+  const fixtures = fixtureResult.value || [];
+
+  const newsResult = await settle(fetchNews(profile, fixtures));
+  if (newsResult.error) errors.push(newsResult.error);
+  const news = newsResult.value || [];
+
+  const oddsResult = await settle(fetchOdds(fixtures, profile.sports));
+  if (oddsResult.error) errors.push(oddsResult.error);
+  const odds = oddsResult.value || {};
+
+  return { data: { fixtures, news, odds, forms: {} }, errors };
+}
+
+async function fetchFixtures(profile) {
+  const sportsDbRequests = profile.teams.flatMap((team) => [
+    sportsDb('eventsnext.php', { id: team.id }).then((data) => (data.events || []).map((event) => normalizeSportsDbEvent(event, team, false))),
+    sportsDb('eventslast.php', { id: team.id }).then((data) => (data.results || data.events || []).map((event) => normalizeSportsDbEvent(event, team, true))),
+  ]);
+  const espnRequests = profile.sports.flatMap((sport) =>
+    (sport.espn || []).map((path) => fetchJson(`${ESPN_BASE}/${path}/scoreboard`).then((data) => (data.events || []).map((event) => normalizeEspnEvent(event, sport, path)))),
   );
-  const recentLists = await Promise.all(
-    teamsWithIds.map((team) =>
-      apiGet('eventslast.php', { id: team.id })
-        .then((data) => (data.results ?? data.events ?? []).map((event) => liveEvent(event, team)))
-        .catch(() => []),
-    ),
+  const settled = await Promise.allSettled([...sportsDbRequests, ...espnRequests]);
+  const fixtures = settled.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
+  return uniqueById(fixtures).sort((a, b) => fixtureTime(a) - fixtureTime(b));
+}
+
+async function fetchNews(profile, fixtures) {
+  const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const terms = unique([
+    ...profile.teams.map((team) => team.name),
+    'FIFA World Cup 2026',
+    ...fixtures.slice(0, 8).flatMap((fixture) => [fixture.homeTeam, fixture.awayTeam].filter(Boolean)),
+  ]).slice(0, 12);
+  const query = terms.map((term) => `"${term}"`).join(' OR ');
+  if (!query) return [];
+  const url = new URL('https://newsapi.org/v2/everything');
+  url.searchParams.set('q', `sports AND (${query})`);
+  url.searchParams.set('from', from);
+  url.searchParams.set('language', 'en');
+  url.searchParams.set('sortBy', 'publishedAt');
+  url.searchParams.set('pageSize', '60');
+  url.searchParams.set('apiKey', NEWS_API_KEY);
+  const data = await fetchJson(url.toString());
+  return (data.articles || [])
+    .filter((article) => article.url && new Date(article.publishedAt) >= new Date(from))
+    .map((article, index) => normalizeArticle(article, index, terms))
+    .filter((article) => article.relatedTeams.length || /world cup|sports|football|basketball|nfl|nba|tennis|cricket|rugby|f1/i.test(`${article.title} ${article.description}`));
+}
+
+async function fetchOdds(fixtures, selectedSports) {
+  const oddsSports = unique(selectedSports.flatMap((sport) => sport.odds || [])).slice(0, 8);
+  const settled = await Promise.allSettled(
+    oddsSports.map((sportKey) => {
+      const url = new URL(`https://api.the-odds-api.com/v4/sports/${sportKey}/odds/`);
+      url.searchParams.set('apiKey', ODDS_API_KEY);
+      url.searchParams.set('regions', 'us,uk,eu');
+      url.searchParams.set('markets', 'h2h,btts,totals');
+      url.searchParams.set('oddsFormat', 'decimal');
+      return fetchJson(url.toString()).then((events) => ({ sportKey, events }));
+    }),
   );
-
-  return {
-    upcoming: uniqueById(upcomingLists.flat()).sort((a, b) => eventTimestamp(a) - eventTimestamp(b)),
-    recent: uniqueById(recentLists.flat()).sort((a, b) => eventTimestamp(b) - eventTimestamp(a)),
-  };
+  const oddsEvents = settled.flatMap((result) => (result.status === 'fulfilled' ? result.value.events || [] : []));
+  return fixtures.reduce((map, fixture) => {
+    const match = oddsEvents.find((event) => oddsMatchesFixture(event, fixture));
+    return match ? { ...map, [fixture.id]: normalizeOdds(match) } : map;
+  }, {});
 }
 
-async function apiGet(endpoint, params = {}) {
-  const url = new URL(`${API_BASE}/${endpoint}`);
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      url.searchParams.set(key, value);
-    }
-  });
-
-  const response = await fetch(url.toString());
-  if (!response.ok) {
-    throw new Error(`TheSportsDB request failed (${response.status})`);
-  }
-
-  return response.json();
+async function searchLive(query, mode, selectedSports) {
+  const requests = [];
+  if (mode === 'team' || mode === 'all') requests.push(sportsDb('searchteams.php', { t: query }).then((data) => (data.teams || []).map(normalizeTeam)));
+  if (mode === 'player' || mode === 'all') requests.push(sportsDb('searchplayers.php', { p: query }).then((data) => (data.player || []).map(normalizePlayer)));
+  const settled = await Promise.allSettled(requests);
+  const results = settled.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
+  const allowed = new Set((selectedSports || []).map((sport) => sport.apiSport));
+  const filtered = allowed.size && mode !== 'all' ? results.filter((item) => allowed.has(item.sport)) : results;
+  if (!filtered.length && settled.some((result) => result.status === 'rejected')) throw new Error('Live search is temporarily unavailable.');
+  return uniqueById(filtered).slice(0, 10);
 }
 
-function liveTeam(team) {
-  return {
-    id: team.idTeam,
-    league: team.strLeague || team.strLeague2 || 'TheSportsDB',
-    meta: team.strLeague || team.strSport || 'Team',
-    name: team.strTeam,
-    sport: team.strSport,
-    type: 'team',
-  };
+async function fetchKeyPlayers(fixture) {
+  const teams = [fixture.homeTeam, fixture.awayTeam].filter(Boolean);
+  const playerLists = await Promise.all(
+    teams.map(async (teamName) => {
+      const teamData = await sportsDb('searchteams.php', { t: teamName });
+      const team = teamData.teams?.[0];
+      if (!team?.idTeam) return [];
+      const playersData = await sportsDb('lookup_all_players.php', { id: team.idTeam });
+      return (playersData.player || []).slice(0, 4).map(normalizePlayer);
+    }),
+  );
+  return playerLists.flat().slice(0, 8);
 }
 
-function livePlayer(player) {
+async function fetchRecentForm(fixture) {
+  const teams = [fixture.homeTeam, fixture.awayTeam].filter(Boolean);
+  const entries = await Promise.all(
+    teams.map(async (teamName) => {
+      const teamData = await sportsDb('searchteams.php', { t: teamName });
+      const team = teamData.teams?.[0];
+      if (!team?.idTeam) return [teamName, []];
+      const formData = await sportsDb('eventslast.php', { id: team.idTeam });
+      return [teamName, (formData.results || []).map((event) => normalizeSportsDbEvent(event, normalizeTeam(team), true))];
+    }),
+  );
+  return Object.fromEntries(entries);
+}
+
+function normalizeTeam(team) {
+  return { id: team.idTeam, type: 'team', name: team.strTeam, sport: team.strSport, league: team.strLeague, meta: team.strLeague || team.strSport || 'Team' };
+}
+
+function normalizePlayer(player) {
   return {
     id: player.idPlayer,
-    league: player.strTeam || player.strSport || 'TheSportsDB',
-    meta: `${player.strPosition || 'Player'} - ${player.strTeam || player.strSport || 'TheSportsDB'}`,
+    type: 'player',
     name: player.strPlayer,
-    nationality: player.strNationality,
-    position: player.strPosition,
     sport: player.strSport,
     team: player.strTeam,
-    type: 'player',
+    league: player.strTeam,
+    position: player.strPosition,
+    nationality: player.strNationality,
+    meta: `${player.strPosition || 'Player'} - ${player.strTeam || player.strSport || 'TheSportsDB'}`,
   };
 }
 
-function liveEvent(event, followedTeam) {
+function normalizeSportsDbEvent(event, followedTeam, completedFallback) {
+  const completed = event.intHomeScore !== null && event.intHomeScore !== undefined;
   return {
-    id: event.idEvent,
-    awayTeam: event.strAwayTeam,
-    date: event.dateEvent,
-    homeTeam: event.strHomeTeam,
-    league: event.strLeague || followedTeam.league || event.strSport || 'TheSportsDB',
-    name: event.strEvent,
-    score:
-      event.intHomeScore !== null && event.intHomeScore !== undefined
-        ? `${event.intHomeScore} - ${event.intAwayScore}`
-        : '',
+    id: `sportsdb-${event.idEvent}`,
+    source: 'TheSportsDB',
+    rawId: event.idEvent,
     sport: event.strSport || followedTeam.sport,
-    team: followedTeam.name,
-    time: event.strTime,
-    timestamp: event.strTimestamp,
-    type: 'event',
+    name: event.strEvent,
+    shortName: event.strEvent,
+    homeTeam: event.strHomeTeam,
+    awayTeam: event.strAwayTeam,
+    competition: event.strLeague || followedTeam.league || event.strSport || 'Competition',
+    date: event.strTimestamp || `${event.dateEvent || new Date().toISOString().slice(0, 10)}T${(event.strTime || '12:00:00').replace('+00:00', '')}Z`,
     venue: event.strVenue,
+    completed: completed || completedFallback,
+    score: completed ? `${event.intHomeScore} - ${event.intAwayScore}` : '',
+    status: completed ? 'Final' : 'Upcoming',
   };
 }
 
-function visibleLeagueConfigs(selectedSports) {
-  return selectedSports.flatMap((sport) =>
-    (featuredLeagues[sport.id] ?? []).map((league) => ({
-      ...league,
-      apiSport: sport.apiSport,
-      sportId: sport.id,
-    })),
-  );
-}
-
-function eventToFeedCard(event, timezone) {
-  const score = event.score ? `Final score: ${event.score}.` : 'Recent result from TheSportsDB.';
+function normalizeEspnEvent(event, sport, path) {
+  const competition = event.competitions?.[0];
+  const competitors = competition?.competitors || [];
+  const home = competitors.find((item) => item.homeAway === 'home') || competitors[0] || {};
+  const away = competitors.find((item) => item.homeAway === 'away') || competitors[1] || {};
+  const leagueName = path === 'soccer/fifa.world' ? 'FIFA World Cup 2026' : event.league?.name || sport.leagues?.[0] || sport.label;
   return {
-    id: `recent-${event.id}`,
-    category: 'Match Reports',
-    headline: event.name,
-    snippet: `${score} ${event.league} at ${event.venue || 'venue TBA'}.`,
-    sortDate: eventDate(event).toISOString(),
-    team: event.team || event.homeTeam,
-    timeAgo: formatEventDate(event, timezone),
-    url: `https://www.thesportsdb.com/event/${event.id}`,
-    watchItem: eventToWatchItem(event),
+    id: `espn-${event.id}`,
+    source: 'ESPN',
+    rawId: event.id,
+    sport: sport.apiSport,
+    name: event.name || `${home.team?.displayName} vs ${away.team?.displayName}`,
+    shortName: event.shortName || event.name,
+    homeTeam: home.team?.displayName || home.team?.name,
+    awayTeam: away.team?.displayName || away.team?.name,
+    competition: leagueName,
+    date: event.date,
+    venue: competition?.venue?.fullName,
+    completed: Boolean(event.status?.type?.completed),
+    score: event.status?.type?.completed ? `${home.score ?? ''} - ${away.score ?? ''}` : '',
+    status: event.status?.type?.description || 'Scheduled',
   };
 }
 
-function eventToUpcomingCard(event, timezone) {
+function normalizeArticle(article, index, terms) {
+  const haystack = `${article.title || ''} ${article.description || ''}`.toLowerCase();
   return {
-    id: `upcoming-${event.id}`,
-    category: 'Upcoming',
-    headline: event.name,
-    snippet: `${event.league} kickoff is ${formatEventDate(event, timezone)} at ${event.venue || 'venue TBA'}.`,
-    sortDate: eventDate(event).toISOString(),
-    team: event.team || event.homeTeam,
-    timeAgo: formatEventDate(event, timezone),
-    url: `https://www.thesportsdb.com/event/${event.id}`,
-    watchItem: eventToWatchItem(event),
+    id: article.url || `article-${index}`,
+    title: article.title,
+    description: article.description,
+    source: article.source?.name || 'NewsAPI',
+    url: article.url,
+    publishedAt: article.publishedAt,
+    relatedTeams: terms.filter((term) => haystack.includes(term.toLowerCase())),
   };
 }
 
-function eventToWatchItem(event) {
-  return {
-    id: event.id,
-    meta: `${event.league} - ${formatEventDate(event, getBrowserTimezone())}`,
-    name: event.name,
-    type: 'event',
-  };
-}
-
-function playerToWatchItem(player) {
-  return {
-    id: player.id,
-    meta: player.meta || `${player.position || 'Player'} - ${player.team || player.sport || 'TheSportsDB'}`,
-    name: player.name,
-    type: 'player',
-  };
-}
-
-function searchItemToWatchItem(item) {
-  if (item.type === 'player') {
-    return playerToWatchItem(item);
-  }
-
-  return {
-    id: item.id,
-    meta: item.meta || item.league || item.sport || 'TheSportsDB',
-    name: item.name,
-    type: 'team',
-  };
-}
-
-function followItem(profile, item) {
-  if (item.type === 'team') {
-    return addUnique(profile, 'teams', {
-      id: item.id,
-      league: item.meta,
-      meta: item.meta,
-      name: item.name,
-      sport: item.sport,
-      type: 'team',
+function normalizeOdds(event) {
+  const markets = { h2h: [], btts: [], totals: [] };
+  (event.bookmakers || []).forEach((bookmaker) => {
+    (bookmaker.markets || []).forEach((market) => {
+      if (!markets[market.key]) return;
+      markets[market.key].push({
+        bookmaker: bookmaker.title,
+        outcomes: (market.outcomes || []).map((outcome) => ({ name: outcome.name, price: outcome.price, point: outcome.point })),
+      });
     });
-  }
-
-  if (item.type === 'player') {
-    return addUnique(profile, 'players', {
-      id: item.id,
-      meta: item.meta,
-      name: item.name,
-      position: item.position,
-      sport: item.sport,
-      team: item.team,
-      type: 'player',
-    });
-  }
-
-  return profile;
+  });
+  return { id: event.id, homeTeam: event.home_team, awayTeam: event.away_team, markets };
 }
 
-function addUnique(profile, key, item) {
-  if (profile[key].some((existingItem) => existingItem.id === item.id)) {
-    return profile;
-  }
-
-  return { ...profile, [key]: [...profile[key], item] };
+function fixtureToWatchItem(fixture) {
+  return { id: fixture.id, type: 'fixture', name: fixture.name, meta: `${fixture.competition} · ${fixture.status}`, fixture };
 }
 
-function addUniqueItem(items, item) {
-  return items.some((existingItem) => existingItem.id === item.id) ? items : [...items, item];
+function newsForFixture(news, fixture) {
+  return news.filter((article) => article.relatedTeams.some((team) => includesTeam(fixture, team)) || [fixture.homeTeam, fixture.awayTeam].some((team) => article.title?.toLowerCase().includes((team || '').toLowerCase())));
 }
 
-function isFollowing(item, profile) {
-  if (item.type === 'team') {
-    return profile.teams.some((team) => team.id === item.id);
-  }
-
-  if (item.type === 'player') {
-    return profile.players.some((player) => player.id === item.id);
-  }
-
-  return false;
+function oddsMatchesFixture(event, fixture) {
+  const home = normalizeName(event.home_team);
+  const away = normalizeName(event.away_team);
+  return (home && normalizeName(fixture.homeTeam).includes(home)) || (away && normalizeName(fixture.awayTeam).includes(away)) || (normalizeName(fixture.homeTeam).includes(home) && normalizeName(fixture.awayTeam).includes(away));
 }
 
-function groupEventsByDay(events, timezone) {
-  return events.reduce((groupedEvents, event) => {
-    const key = formatIsoDate(eventDate(event), timezone);
-    return {
-      ...groupedEvents,
-      [key]: [...(groupedEvents[key] ?? []), event],
-    };
+function groupFixturesByDay(fixtures, timezone) {
+  return fixtures.reduce((grouped, fixture) => {
+    const day = isoInTimezone(fixture.date, timezone);
+    return { ...grouped, [day]: [...(grouped[day] || []), fixture] };
   }, {});
 }
 
 function getCurrentWeek(timezone) {
-  const safeTimezone = normalizeTimezone(timezone);
   const today = new Date();
-  const localToday = new Date(formatIsoDate(today, safeTimezone));
-  const dayIndex = localToday.getUTCDay();
-  const mondayOffset = dayIndex === 0 ? -6 : 1 - dayIndex;
-  const monday = new Date(localToday);
-  monday.setUTCDate(localToday.getUTCDate() + mondayOffset);
-
+  const todayIso = isoInTimezone(today, timezone);
+  const local = new Date(`${todayIso}T12:00:00Z`);
+  const day = local.getUTCDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  const monday = new Date(local);
+  monday.setUTCDate(local.getUTCDate() + mondayOffset);
   return Array.from({ length: 7 }, (_, index) => {
     const date = new Date(monday);
     date.setUTCDate(monday.getUTCDate() + index);
-    const isoDate = date.toISOString().slice(0, 10);
+    const iso = date.toISOString().slice(0, 10);
     return {
+      isoDate: iso,
+      isToday: iso === todayIso,
       dayName: date.toLocaleDateString(undefined, { weekday: 'long', timeZone: 'UTC' }),
-      isToday: isoDate === formatIsoDate(today, safeTimezone),
-      isoDate,
-      label: date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', timeZone: 'UTC' }),
+      label: date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' }),
     };
   });
 }
 
-function eventDate(event) {
-  if (event.timestamp) {
-    return new Date(event.timestamp);
-  }
-
-  if (event.date && event.time) {
-    return new Date(`${event.date}T${event.time.replace('+00:00', '')}Z`);
-  }
-
-  if (event.date) {
-    return new Date(`${event.date}T12:00:00Z`);
-  }
-
-  return new Date();
+function fetchJson(url) {
+  return fetch(url).then((response) => {
+    if (!response.ok) throw new Error(`Request failed (${response.status})`);
+    return response.json();
+  });
 }
 
-function eventTimestamp(event) {
-  return eventDate(event).getTime();
+function sportsDb(endpoint, params = {}) {
+  const url = new URL(`${SPORTDB_BASE}/${endpoint}`);
+  Object.entries(params).forEach(([key, value]) => value && url.searchParams.set(key, value));
+  return fetchJson(url.toString());
 }
 
-function formatEventDate(event, timezone) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: normalizeTimezone(timezone),
-  }).format(eventDate(event));
-}
-
-function formatEventTime(event, timezone) {
-  return new Intl.DateTimeFormat(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: normalizeTimezone(timezone),
-  }).format(eventDate(event));
-}
-
-function formatIsoDate(date, timezone) {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    day: '2-digit',
-    month: '2-digit',
-    timeZone: normalizeTimezone(timezone),
-    year: 'numeric',
-  }).formatToParts(date);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${values.year}-${values.month}-${values.day}`;
-}
-
-function itemMeta(item, mode) {
-  if (mode === 'player') {
-    return item.meta || `${item.position || 'Player'} - ${item.team || item.sport || 'TheSportsDB'}`;
-  }
-
-  if (mode === 'team') {
-    return item.meta || item.league || item.sport || 'Team';
-  }
-
-  return item.type === 'player'
-    ? item.meta || `${item.position || 'Player'} - ${item.team || item.sport || 'TheSportsDB'}`
-    : item.meta || item.league || item.sport || 'Team';
-}
-
-function sportFromApi(apiSport) {
-  return sportOptions.find((sport) => sport.apiSport === apiSport) ?? {
-    id: 'live',
-    label: apiSport || 'Live',
-    icon: (apiSport || 'Live').slice(0, 3).toUpperCase(),
-  };
-}
-
-function sportLabel(sportId) {
-  return sportOptions.find((sport) => sport.id === sportId)?.label ?? sportId;
-}
-
-function uniqueById(items) {
-  return items.filter((item, index, allItems) => allItems.findIndex((candidate) => candidate.id === item.id) === index);
-}
-
-function initials(name = '') {
-  return name
-    .split(' ')
-    .map((part) => part[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-function onboardingTitle(step) {
-  if (step === 1) {
-    return 'Pick sports and confirm your timezone.';
-  }
-
-  if (step === 2) {
-    return 'Search real teams to follow.';
-  }
-
-  return 'Optionally add live player follows.';
-}
-
-function onboardingText(step) {
-  if (step === 1) {
-    return 'Fieldwatch detects your timezone automatically and shows major leagues for every sport you pick.';
-  }
-
-  if (step === 2) {
-    return 'Search TheSportsDB across major football, basketball, tennis, F1, cricket, rugby, NFL, baseball, and World Cup data.';
-  }
-
-  return 'Player search is optional, and you can always add more from the Players page or the Watchlist search.';
+function settle(promise) {
+  return promise.then((value) => ({ value })).catch((error) => ({ error: error.message || String(error) }));
 }
 
 function loadProfile() {
-  if (typeof window === 'undefined') {
-    return emptyProfile;
-  }
-
   try {
-    const storedProfile = JSON.parse(window.localStorage.getItem(PROFILE_KEY) ?? 'null');
-    if (!storedProfile) {
-      return emptyProfile;
-    }
-
-    return {
-      sports: Array.isArray(storedProfile.sports) ? storedProfile.sports : [],
-      teams: Array.isArray(storedProfile.teams) ? storedProfile.teams : [],
-      players: Array.isArray(storedProfile.players) ? storedProfile.players : [],
-      timezone: storedProfile.timezone || getBrowserTimezone(),
-    };
+    const stored = JSON.parse(window.localStorage.getItem(PROFILE_KEY) || 'null');
+    return stored ? { ...emptyProfile, ...stored } : emptyProfile;
   } catch {
     return emptyProfile;
   }
@@ -1348,17 +1234,84 @@ function setAndSaveProfile(profile, setProfile) {
   setProfile(profile);
 }
 
-function getBrowserTimezone() {
+function isFollowing(item, profile) {
+  if (item.type === 'team') return profile.teams.some((team) => team.id === item.id);
+  if (item.type === 'player') return profile.players.some((player) => player.id === item.id);
+  return false;
+}
+
+function addUnique(profile, key, item) {
+  return profile[key].some((existing) => existing.id === item.id) ? profile : { ...profile, [key]: [...profile[key], item] };
+}
+
+function addUniqueItem(items, item) {
+  return items.some((existing) => existing.id === item.id) ? items : [...items, item];
+}
+
+function uniqueById(items) {
+  return items.filter((item, index, all) => item.id && all.findIndex((candidate) => candidate.id === item.id) === index);
+}
+
+function unique(items) {
+  return [...new Set(items.filter(Boolean))];
+}
+
+function fixtureTime(fixture) {
+  return new Date(fixture.date).getTime();
+}
+
+function includesTeam(fixture, teamName = '') {
+  const needle = normalizeName(teamName);
+  return normalizeName(fixture.homeTeam).includes(needle) || normalizeName(fixture.awayTeam).includes(needle) || normalizeName(fixture.name).includes(needle);
+}
+
+function normalizeName(name = '') {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function formatDateTime(value, timezone) {
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short', timeZone: safeTimezone(timezone) }).format(new Date(value));
+}
+
+function formatTime(value, timezone) {
+  return new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit', timeZone: safeTimezone(timezone) }).format(new Date(value));
+}
+
+function isoInTimezone(value, timezone) {
+  const parts = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: safeTimezone(timezone) }).formatToParts(new Date(value));
+  const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${map.year}-${map.month}-${map.day}`;
+}
+
+function browserTimezone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 }
 
-function normalizeTimezone(timezone) {
+function safeTimezone(timezone) {
   try {
     new Intl.DateTimeFormat(undefined, { timeZone: timezone }).format(new Date());
     return timezone;
   } catch {
-    return getBrowserTimezone();
+    return browserTimezone();
   }
+}
+
+function initials(name = '') {
+  return name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
+}
+
+function sportIcon(sport) {
+  return sports.find((item) => item.apiSport === sport || item.label === sport)?.icon || (sport || 'SP').slice(0, 3).toUpperCase();
+}
+
+function shortName(name = '') {
+  return name.split(' ').map((part) => part[0]).join('').slice(0, 3).toUpperCase();
+}
+
+function marketLabel(key, fixture) {
+  if (key === 'h2h') return fixture.sport === 'Soccer' ? 'Match winner' : 'Winner';
+  if (key === 'btts') return 'Both teams to score';
+  return 'Over/under 2.5';
 }
 
 export default App;

@@ -1009,6 +1009,220 @@ a {
   color: var(--muted);
 }
 
+.fixture-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+  padding: 0.25rem 0 0.75rem;
+  scroll-snap-type: x proximity;
+}
+
+.fixture-chip {
+  display: grid;
+  min-width: 18rem;
+  gap: 0.45rem;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 1.15rem;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  scroll-snap-align: start;
+}
+
+.fixture-chip > button:first-child,
+.team-fixture,
+.watch-main {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+}
+
+.fixture-chip span,
+.fixture-chip small,
+.team-fixture span {
+  color: var(--muted);
+}
+
+.fixture-chip > button:last-child {
+  justify-self: start;
+  padding: 0.55rem 0.75rem;
+  border-radius: 999px;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  font-weight: 850;
+}
+
+.odds-preview {
+  display: block;
+  width: fit-content;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.detail-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.detail-page > .button {
+  justify-self: start;
+}
+
+.detail-hero,
+.detail-panel {
+  border: 1px solid var(--line);
+  border-radius: 1.35rem;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.detail-hero {
+  display: grid;
+  gap: 0.6rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.detail-hero h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+
+.detail-hero p:not(.eyebrow) {
+  margin: 0;
+  color: var(--muted);
+}
+
+.detail-hero > strong {
+  width: fit-content;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  color: var(--green-dark);
+  background: var(--green-soft);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.detail-panel {
+  display: grid;
+  gap: 0.85rem;
+  align-content: start;
+  padding: 1rem;
+}
+
+.detail-panel h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: -0.04em;
+}
+
+.compact-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.odds-table {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.odds-table section,
+.form-card,
+.news-list-compact a,
+.team-fixture {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: #f6f2e9;
+}
+
+.odds-table h4 {
+  margin: 0;
+  color: var(--green);
+}
+
+.odds-table article {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.odds-table article div,
+.form-grid {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.odds-table span,
+.form-card span,
+.news-list-compact span {
+  color: var(--muted);
+}
+
+.news-list-compact {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.news-list-compact a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.form-card button {
+  justify-self: start;
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+  font-weight: 850;
+}
+
+.watchlist-card.clickable {
+  gap: 0.7rem;
+}
+
+.watch-main > span {
+  color: var(--green);
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.watch-main p {
+  margin: 0;
+}
+
+.watch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.watch-actions button {
+  padding: 0.5rem 0.65rem;
+  font-size: 0.82rem;
+}
+
+.status-list {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
 @media (max-width: 1100px) {
   .calendar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1024,6 +1238,10 @@ a {
 
   .player-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
   }
 }
 
