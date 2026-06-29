@@ -1,0 +1,235 @@
+export const followedTeams = ['Arsenal', 'Golden State Warriors', 'Man United'];
+
+export const categories = ['transfers', 'injuries', 'match reports', 'press'];
+
+export const articles = [
+  {
+    id: 1,
+    title: 'Arsenal eye late-window midfield depth after friendly win',
+    team: 'Arsenal',
+    category: 'transfers',
+    source: 'North Bank Daily',
+    time: '12 min ago',
+    publishedAt: '2026-06-29T06:43:00Z',
+    summary: 'Club scouts are tracking two versatile midfielders as Mikel Arteta keeps rotation options open.',
+  },
+  {
+    id: 2,
+    title: 'Warriors training notes: Kuminga flashes in transition drills',
+    team: 'Golden State Warriors',
+    category: 'press',
+    source: 'Bay Hoops Wire',
+    time: '28 min ago',
+    publishedAt: '2026-06-29T06:27:00Z',
+    summary: "Steve Kerr praised the forward's pace and decision-making during an upbeat media session.",
+  },
+  {
+    id: 3,
+    title: 'Man United confirm Martinez returns to full contact work',
+    team: 'Man United',
+    category: 'injuries',
+    source: 'Stretford Report',
+    time: '44 min ago',
+    publishedAt: '2026-06-29T06:11:00Z',
+    summary: 'The defender completed a full session and could feature in the next preseason fixture.',
+  },
+  {
+    id: 4,
+    title: 'Arsenal 2-1 Lyon: Saka seals sharp preseason comeback',
+    team: 'Arsenal',
+    category: 'match reports',
+    source: 'Matchday Brief',
+    time: '1 hr ago',
+    publishedAt: '2026-06-29T05:55:00Z',
+    summary: 'Bukayo Saka scored late after Arsenal controlled possession and created the better chances.',
+  },
+  {
+    id: 5,
+    title: 'Golden State add summer-league guard on two-way deal',
+    team: 'Golden State Warriors',
+    category: 'transfers',
+    source: 'Pacific Sports Desk',
+    time: '2 hrs ago',
+    publishedAt: '2026-06-29T04:45:00Z',
+    summary: 'The Warriors moved quickly after a strong workout that impressed front-office staff.',
+  },
+  {
+    id: 6,
+    title: 'United 0-0 Inter: Clean sheet leads staff takeaways',
+    team: 'Man United',
+    category: 'match reports',
+    source: 'Final Whistle',
+    time: '3 hrs ago',
+    publishedAt: '2026-06-29T03:41:00Z',
+    summary: 'Ruben Amorim highlighted compact defending and faster buildup after a controlled draw.',
+  },
+];
+
+export const scheduleDays = [
+  {
+    key: 'mon',
+    label: 'Mon',
+    date: 'Jun 29',
+    matches: [
+      {
+        id: 1,
+        home: 'Arsenal',
+        away: 'Lyon',
+        score: '2 - 1',
+        status: 'Final',
+        venue: 'Emirates Stadium',
+      },
+      {
+        id: 2,
+        home: 'Man United',
+        away: 'Inter',
+        score: '0 - 0',
+        status: 'Final',
+        venue: 'Old Trafford',
+      },
+    ],
+  },
+  {
+    key: 'tue',
+    label: 'Tue',
+    date: 'Jun 30',
+    matches: [
+      {
+        id: 3,
+        home: 'Golden State Warriors',
+        away: 'Los Angeles Lakers',
+        kickoff: '7:30 PM',
+        status: 'Tonight',
+        venue: 'Chase Center',
+      },
+    ],
+  },
+  {
+    key: 'wed',
+    label: 'Wed',
+    date: 'Jul 1',
+    matches: [
+      {
+        id: 4,
+        home: 'Arsenal',
+        away: 'Benfica',
+        kickoff: '6:00 PM',
+        status: 'Upcoming',
+        venue: 'Estadio da Luz',
+      },
+    ],
+  },
+  {
+    key: 'thu',
+    label: 'Thu',
+    date: 'Jul 2',
+    matches: [
+      {
+        id: 5,
+        home: 'Man United',
+        away: 'Ajax',
+        kickoff: '8:15 PM',
+        status: 'Upcoming',
+        venue: 'Johan Cruyff Arena',
+      },
+    ],
+  },
+  {
+    key: 'fri',
+    label: 'Fri',
+    date: 'Jul 3',
+    matches: [
+      {
+        id: 6,
+        home: 'Golden State Warriors',
+        away: 'Denver Nuggets',
+        kickoff: '8:00 PM',
+        status: 'Upcoming',
+        venue: 'Ball Arena',
+      },
+    ],
+  },
+  {
+    key: 'sat',
+    label: 'Sat',
+    date: 'Jul 4',
+    matches: [
+      {
+        id: 7,
+        home: 'Arsenal',
+        away: 'Barcelona',
+        kickoff: '4:30 PM',
+        status: 'Upcoming',
+        venue: 'SoFi Stadium',
+      },
+      {
+        id: 8,
+        home: 'Man United',
+        away: 'Milan',
+        kickoff: '9:00 PM',
+        status: 'Upcoming',
+        venue: 'MetLife Stadium',
+      },
+    ],
+  },
+  {
+    key: 'sun',
+    label: 'Sun',
+    date: 'Jul 5',
+    matches: [],
+  },
+];
+
+export const followedPlayers = [
+  {
+    id: 1,
+    name: 'Bukayo Saka',
+    team: 'Arsenal',
+    role: 'Forward',
+    note: '3 goals in last 5 starts',
+    metric: '91 form',
+  },
+  {
+    id: 2,
+    name: 'Stephen Curry',
+    team: 'Golden State Warriors',
+    role: 'Guard',
+    note: 'Cleared for full practice',
+    metric: '29.4 ppg',
+  },
+  {
+    id: 3,
+    name: 'Bruno Fernandes',
+    team: 'Man United',
+    role: 'Midfielder',
+    note: 'Created 6 chances last match',
+    metric: '8.8 rating',
+  },
+];
+
+export const suggestedPlayers = [
+  {
+    id: 4,
+    name: 'Declan Rice',
+    team: 'Arsenal',
+    role: 'Midfielder',
+    note: 'Trending after dominant friendly',
+    metric: '74 touches',
+  },
+  {
+    id: 5,
+    name: 'Jonathan Kuminga',
+    team: 'Golden State Warriors',
+    role: 'Forward',
+    note: 'Featured heavily in camp notes',
+    metric: '+12 net',
+  },
+  {
+    id: 6,
+    name: 'Kobbie Mainoo',
+    team: 'Man United',
+    role: 'Midfielder',
+    note: 'Suggested from your United follows',
+    metric: '92 pass%',
+  },
+];
