@@ -1,168 +1,169 @@
 import { useMemo, useState } from 'react';
 
-const profileStorageKey = 'fieldwatch:onboarding-profile';
-const pages = ['Feed', 'Schedule', 'Players'];
+const storageKey = 'fieldwatch:v2-profile';
+const navItems = ['Feed', 'Schedule', 'Players'];
+const categories = ['All', 'Transfers', 'Injuries', 'Match Reports', 'Press'];
 
 const sports = [
-  { id: 'football', label: 'Football', icon: 'FC' },
-  { id: 'basketball', label: 'Basketball', icon: 'BB' },
-  { id: 'tennis', label: 'Tennis', icon: 'TN' },
-  { id: 'f1', label: 'F1', icon: 'F1' },
-  { id: 'cricket', label: 'Cricket', icon: 'CR' },
-  { id: 'rugby', label: 'Rugby', icon: 'RU' },
-  { id: 'nfl', label: 'NFL', icon: 'NFL' },
-  { id: 'baseball', label: 'Baseball', icon: 'MLB' },
+  { id: 'football', label: 'Football' },
+  { id: 'basketball', label: 'Basketball' },
+  { id: 'tennis', label: 'Tennis' },
+  { id: 'f1', label: 'F1' },
+  { id: 'cricket', label: 'Cricket' },
+  { id: 'rugby', label: 'Rugby' },
+  { id: 'nfl', label: 'NFL' },
+  { id: 'baseball', label: 'Baseball' },
 ];
 
-const teams = [
+const teamDirectory = [
   { id: 'arsenal', name: 'Arsenal', sport: 'Football', league: 'Premier League' },
   { id: 'man-united', name: 'Man United', sport: 'Football', league: 'Premier League' },
   { id: 'warriors', name: 'Golden State Warriors', sport: 'Basketball', league: 'NBA' },
   { id: 'lakers', name: 'Los Angeles Lakers', sport: 'Basketball', league: 'NBA' },
-  { id: 'ferrari', name: 'Ferrari', sport: 'F1', league: 'Formula 1' },
-  { id: 'india-cricket', name: 'India', sport: 'Cricket', league: 'ICC' },
+  { id: 'mclaren', name: 'McLaren', sport: 'F1', league: 'Formula 1' },
+  { id: 'india', name: 'India Cricket', sport: 'Cricket', league: 'ICC' },
   { id: 'all-blacks', name: 'All Blacks', sport: 'Rugby', league: 'Test Rugby' },
   { id: 'chiefs', name: 'Kansas City Chiefs', sport: 'NFL', league: 'NFL' },
   { id: 'dodgers', name: 'Los Angeles Dodgers', sport: 'Baseball', league: 'MLB' },
-  { id: 'swiatek-team', name: 'Team Swiatek', sport: 'Tennis', league: 'WTA' },
+  { id: 'swiatek-camp', name: 'Team Swiatek', sport: 'Tennis', league: 'WTA' },
 ];
 
-const players = [
+const playerDirectory = [
   {
     id: 'saka',
     name: 'Bukayo Saka',
     position: 'Forward',
     team: 'Arsenal',
-    note: 'Creative threat from the right',
+    blurb: 'Creating chances from the right side.',
   },
   {
     id: 'rice',
     name: 'Declan Rice',
     position: 'Midfielder',
     team: 'Arsenal',
-    note: 'Controls Arsenal tempo',
+    blurb: 'Controlling tempo and transitions.',
   },
   {
     id: 'curry',
     name: 'Stephen Curry',
     position: 'Guard',
     team: 'Golden State Warriors',
-    note: 'Cleared for full practice',
+    blurb: 'Back in full shooting rhythm.',
   },
   {
     id: 'kuminga',
     name: 'Jonathan Kuminga',
     position: 'Forward',
     team: 'Golden State Warriors',
-    note: 'Camp standout',
+    blurb: 'Trending after a sharp camp session.',
   },
   {
     id: 'fernandes',
     name: 'Bruno Fernandes',
     position: 'Midfielder',
     team: 'Man United',
-    note: 'Chance creation leader',
+    blurb: 'Still the main chance creator.',
   },
   {
     id: 'mainoo',
     name: 'Kobbie Mainoo',
     position: 'Midfielder',
     team: 'Man United',
-    note: 'Suggested from United follows',
+    blurb: 'Suggested from your United follows.',
   },
   {
     id: 'swiatek',
     name: 'Iga Swiatek',
     position: 'Singles',
     team: 'Team Swiatek',
-    note: 'Clay court form tracker',
+    blurb: 'Major form tracker for tennis fans.',
   },
   {
     id: 'mahomes',
     name: 'Patrick Mahomes',
     position: 'Quarterback',
     team: 'Kansas City Chiefs',
-    note: 'Camp rhythm reports',
+    blurb: 'Camp reports are picking up.',
+  },
+  {
+    id: 'betts',
+    name: 'Mookie Betts',
+    position: 'Shortstop',
+    team: 'Los Angeles Dodgers',
+    blurb: 'Multi-position impact watch.',
   },
 ];
 
-const categories = ['All', 'Transfers', 'Injuries', 'Match Reports', 'Press'];
-
-const articles = [
+const news = [
   {
-    id: 'a1',
+    id: 'n1',
     team: 'Arsenal',
     category: 'Transfers',
-    time: '12 min ago',
+    timeAgo: '12 min ago',
     publishedAt: '2026-06-29T06:43:00Z',
     headline: 'Arsenal eye late-window midfield depth after friendly win',
     snippet: 'Club scouts are tracking two versatile midfielders as Mikel Arteta keeps rotation options open.',
     url: 'https://example.com/fieldwatch/arsenal-midfield-depth',
-    watchlistItem: { type: 'player', id: 'rice', name: 'Declan Rice', meta: 'Arsenal midfielder' },
+    watchItem: { type: 'player', id: 'rice', name: 'Declan Rice', meta: 'Midfielder - Arsenal' },
   },
   {
-    id: 'a2',
+    id: 'n2',
     team: 'Golden State Warriors',
     category: 'Press',
-    time: '28 min ago',
+    timeAgo: '28 min ago',
     publishedAt: '2026-06-29T06:27:00Z',
     headline: 'Warriors training notes: Kuminga flashes in transition drills',
     snippet: "Steve Kerr praised the forward's pace and decision-making during an upbeat media session.",
     url: 'https://example.com/fieldwatch/warriors-kuminga-camp',
-    watchlistItem: {
-      type: 'player',
-      id: 'kuminga',
-      name: 'Jonathan Kuminga',
-      meta: 'Golden State Warriors forward',
-    },
+    watchItem: { type: 'player', id: 'kuminga', name: 'Jonathan Kuminga', meta: 'Forward - Warriors' },
   },
   {
-    id: 'a3',
+    id: 'n3',
     team: 'Man United',
     category: 'Injuries',
-    time: '44 min ago',
+    timeAgo: '44 min ago',
     publishedAt: '2026-06-29T06:11:00Z',
     headline: 'Man United confirm Martinez returns to full contact work',
     snippet: 'The defender completed a full session and could feature in the next preseason fixture.',
     url: 'https://example.com/fieldwatch/man-united-martinez-training',
-    watchlistItem: { type: 'team', id: 'man-united', name: 'Man United', meta: 'Premier League' },
+    watchItem: { type: 'team', id: 'man-united', name: 'Man United', meta: 'Premier League' },
   },
   {
-    id: 'a4',
+    id: 'n4',
     team: 'Arsenal',
     category: 'Match Reports',
-    time: '1 hr ago',
+    timeAgo: '1 hr ago',
     publishedAt: '2026-06-29T05:55:00Z',
     headline: 'Arsenal 2-1 Lyon: Saka seals sharp preseason comeback',
     snippet: 'Bukayo Saka scored late after Arsenal controlled possession and created the better chances.',
     url: 'https://example.com/fieldwatch/arsenal-lyon-report',
-    watchlistItem: { type: 'team', id: 'lyon', name: 'Lyon', meta: 'Football club' },
+    watchItem: { type: 'team', id: 'lyon', name: 'Lyon', meta: 'Football club' },
   },
   {
-    id: 'a5',
+    id: 'n5',
     team: 'Golden State Warriors',
     category: 'Transfers',
-    time: '2 hrs ago',
+    timeAgo: '2 hrs ago',
     publishedAt: '2026-06-29T04:45:00Z',
     headline: 'Golden State add summer-league guard on two-way deal',
     snippet: 'The Warriors moved quickly after a strong workout that impressed front-office staff.',
     url: 'https://example.com/fieldwatch/warriors-two-way-guard',
-    watchlistItem: { type: 'team', id: 'lakers', name: 'Los Angeles Lakers', meta: 'NBA rival watch' },
+    watchItem: { type: 'team', id: 'lakers', name: 'Los Angeles Lakers', meta: 'NBA rival watch' },
   },
   {
-    id: 'a6',
+    id: 'n6',
     team: 'Man United',
     category: 'Match Reports',
-    time: '3 hrs ago',
+    timeAgo: '3 hrs ago',
     publishedAt: '2026-06-29T03:41:00Z',
     headline: 'United 0-0 Inter: Clean sheet leads staff takeaways',
     snippet: 'Ruben Amorim highlighted compact defending and faster buildup after a controlled draw.',
     url: 'https://example.com/fieldwatch/united-inter-report',
-    watchlistItem: { type: 'team', id: 'inter', name: 'Inter', meta: 'Serie A contender' },
+    watchItem: { type: 'team', id: 'inter', name: 'Inter', meta: 'Serie A contender' },
   },
 ];
 
-const week = [
+const schedule = [
   {
     id: 'mon',
     day: 'Monday',
@@ -276,23 +277,15 @@ const week = [
   },
 ];
 
-const defaultProfile = {
-  sports: [],
-  teams: [],
-  players: [],
-};
+const emptyProfile = { sports: [], teams: [], players: [] };
 
 function App() {
   const [profile, setProfile] = useState(loadProfile);
   const [activePage, setActivePage] = useState('Feed');
   const [watchlist, setWatchlist] = useState([]);
+  const onboarded = profile.sports.length > 0 && profile.teams.length > 0;
 
-  const hasCompletedOnboarding = profile.sports.length > 0 && profile.teams.length > 0;
-
-  const followedTeamNames = profile.teams.map((team) => team.name);
-  const followedPlayerIds = profile.players.map((player) => player.id);
-
-  const updateProfile = (updater) => {
+  const saveProfileState = (updater) => {
     setProfile((currentProfile) => {
       const nextProfile = updater(currentProfile);
       saveProfile(nextProfile);
@@ -307,7 +300,7 @@ function App() {
   };
 
   const addToWatchlist = (item) => {
-    if (!item || isFollowingItem(item, profile) || watchlist.some((entry) => entry.id === item.id)) {
+    if (!item || isFollowing(item, profile) || watchlist.some((entry) => entry.id === item.id)) {
       return;
     }
 
@@ -318,43 +311,21 @@ function App() {
     setWatchlist((currentWatchlist) => currentWatchlist.filter((item) => item.id !== itemId));
   };
 
-  const followItem = (item) => {
-    updateProfile((currentProfile) => {
-      if (item.type === 'team') {
-        const team = teams.find((teamOption) => teamOption.id === item.id) ?? {
-          id: item.id,
-          name: item.name,
-          sport: 'Football',
-          league: item.meta,
-        };
-
-        if (currentProfile.teams.some((followedTeam) => followedTeam.id === team.id)) {
-          return currentProfile;
-        }
-
-        return { ...currentProfile, teams: [...currentProfile.teams, team] };
-      }
-
-      const player = players.find((playerOption) => playerOption.id === item.id) ?? {
-        id: item.id,
-        name: item.name,
-        position: 'Player',
-        team: item.meta,
-        note: 'Added from watchlist',
-      };
-
-      if (currentProfile.players.some((followedPlayer) => followedPlayer.id === player.id)) {
-        return currentProfile;
-      }
-
-      return { ...currentProfile, players: [...currentProfile.players, player] };
-    });
+  const followFromWatchlist = (item) => {
+    saveProfileState((currentProfile) => followItemInProfile(item, currentProfile));
     removeFromWatchlist(item.id);
   };
 
-  if (!hasCompletedOnboarding) {
-    return <OnboardingFlow initialProfile={profile} onComplete={completeOnboarding} />;
+  const followPlayer = (player) => {
+    saveProfileState((currentProfile) => followPlayerInProfile(player, currentProfile));
+  };
+
+  if (!onboarded) {
+    return <Onboarding onComplete={completeOnboarding} />;
   }
+
+  const followedTeamNames = profile.teams.map((team) => team.name);
+  const followedPlayerIds = profile.players.map((player) => player.id);
 
   return (
     <div className="app">
@@ -363,11 +334,10 @@ function App() {
           <span className="brand-mark">F</span>
           <span>Fieldwatch</span>
         </a>
-
         <nav className="nav-tabs" aria-label="Main navigation">
-          {pages.map((page) => (
+          {navItems.map((page) => (
             <button
-              className={activePage === page ? 'nav-tab active' : 'nav-tab'}
+              className={activePage === page ? 'nav-tab is-active' : 'nav-tab'}
               key={page}
               onClick={() => setActivePage(page)}
               type="button"
@@ -378,30 +348,30 @@ function App() {
         </nav>
       </header>
 
-      <main id="top" className="app-shell">
+      <main className="shell" id="top">
         <section className="hero">
           <p className="eyebrow">Fieldwatch</p>
-          <h1>Sports news, fixtures, and player signals tuned to your follows.</h1>
+          <h1>Track the sports stories, fixtures, and players that matter to you.</h1>
           <p>{profile.sports.map((sport) => sport.label).join(', ')}</p>
         </section>
 
         {activePage === 'Feed' && (
-          <FeedPage
-            addToWatchlist={addToWatchlist}
+          <Feed
             followedTeamNames={followedTeamNames}
-            onFollowItem={followItem}
-            onRemoveWatchlistItem={removeFromWatchlist}
+            onAddWatchlist={addToWatchlist}
+            onFollowWatchlist={followFromWatchlist}
+            onRemoveWatchlist={removeFromWatchlist}
             profile={profile}
             watchlist={watchlist}
           />
         )}
-        {activePage === 'Schedule' && <SchedulePage />}
+        {activePage === 'Schedule' && <Schedule />}
         {activePage === 'Players' && (
-          <PlayersPage
-            addToWatchlist={addToWatchlist}
+          <Players
             followedPlayerIds={followedPlayerIds}
+            onAddWatchlist={addToWatchlist}
+            onFollowPlayer={followPlayer}
             profile={profile}
-            updateProfile={updateProfile}
             watchlist={watchlist}
           />
         )}
@@ -410,85 +380,83 @@ function App() {
   );
 }
 
-function OnboardingFlow({ initialProfile, onComplete }) {
+function Onboarding({ onComplete }) {
   const [step, setStep] = useState(1);
-  const [selectedSports, setSelectedSports] = useState(initialProfile.sports);
-  const [selectedTeams, setSelectedTeams] = useState(initialProfile.teams);
-  const [selectedPlayers, setSelectedPlayers] = useState(initialProfile.players);
+  const [selectedSports, setSelectedSports] = useState([]);
+  const [selectedTeams, setSelectedTeams] = useState([]);
+  const [selectedPlayers, setSelectedPlayers] = useState([]);
 
-  const canGoNext = step === 1 ? selectedSports.length > 0 : selectedTeams.length > 0;
+  const canContinue = step === 1 ? selectedSports.length > 0 : selectedTeams.length > 0;
 
-  const finish = () => {
-    onComplete({
-      sports: selectedSports,
-      teams: selectedTeams,
-      players: selectedPlayers,
-    });
+  const getStarted = () => {
+    onComplete({ sports: selectedSports, teams: selectedTeams, players: selectedPlayers });
   };
 
   return (
     <main className="onboarding-screen">
-      <section className="onboarding-panel">
-        <div className="onboarding-header">
-          <a className="brand" href="#welcome" aria-label="Fieldwatch welcome">
+      <section className="welcome-card">
+        <div className="welcome-top">
+          <a className="brand" href="#welcome-title" aria-label="Fieldwatch welcome">
             <span className="brand-mark">F</span>
             <span>Fieldwatch</span>
           </a>
-          <div className="step-indicator" aria-label={`Step ${step} of 3`}>
-            <span className={step === 1 ? 'active' : ''}>1</span>
-            <span className={step === 2 ? 'active' : ''}>2</span>
-            <span className={step === 3 ? 'active' : ''}>3</span>
+          <div className="steps" aria-label={`Step ${step} of 3`}>
+            {[1, 2, 3].map((stepNumber) => (
+              <span className={step === stepNumber ? 'is-active' : ''} key={stepNumber}>
+                {stepNumber}
+              </span>
+            ))}
           </div>
         </div>
 
-        <div className="onboarding-copy" id="welcome">
+        <div className="welcome-copy">
           <p className="eyebrow">Welcome</p>
-          <h1>{getStepTitle(step)}</h1>
-          <p>{getStepText(step)}</p>
+          <h1 id="welcome-title">{onboardingTitle(step)}</h1>
+          <p>{onboardingText(step)}</p>
         </div>
 
         {step === 1 && (
-          <SportPicker selectedSports={selectedSports} setSelectedSports={setSelectedSports} />
+          <SportGrid selectedSports={selectedSports} setSelectedSports={setSelectedSports} />
         )}
         {step === 2 && (
-          <SelectionSearch
-            items={teams}
+          <PickerSearch
+            items={teamDirectory}
             label="Search teams"
-            placeholder="Try Arsenal, Warriors, Chiefs..."
+            placeholder="Search Arsenal, Warriors, Chiefs..."
             selectedItems={selectedTeams}
             setSelectedItems={setSelectedTeams}
             type="team"
           />
         )}
         {step === 3 && (
-          <SelectionSearch
-            items={players}
+          <PickerSearch
+            items={playerDirectory}
             label="Search players"
             optional
-            placeholder="Try Saka, Curry, Mahomes..."
+            placeholder="Search Saka, Curry, Mahomes..."
             selectedItems={selectedPlayers}
             setSelectedItems={setSelectedPlayers}
             type="player"
           />
         )}
 
-        <div className="onboarding-actions">
+        <div className="welcome-actions">
           {step > 1 && (
-            <button className="secondary-button" onClick={() => setStep((current) => current - 1)} type="button">
+            <button className="button secondary" onClick={() => setStep((current) => current - 1)} type="button">
               Back
             </button>
           )}
           {step < 3 ? (
             <button
-              className="primary-button"
-              disabled={!canGoNext}
+              className="button primary"
+              disabled={!canContinue}
               onClick={() => setStep((current) => current + 1)}
               type="button"
             >
               Continue
             </button>
           ) : (
-            <button className="primary-button" onClick={finish} type="button">
+            <button className="button primary" onClick={getStarted} type="button">
               Get started
             </button>
           )}
@@ -498,7 +466,7 @@ function OnboardingFlow({ initialProfile, onComplete }) {
   );
 }
 
-function SportPicker({ selectedSports, setSelectedSports }) {
+function SportGrid({ selectedSports, setSelectedSports }) {
   const toggleSport = (sport) => {
     setSelectedSports((currentSports) =>
       currentSports.some((currentSport) => currentSport.id === sport.id)
@@ -508,19 +476,19 @@ function SportPicker({ selectedSports, setSelectedSports }) {
   };
 
   return (
-    <div className="sport-grid" aria-label="Sports">
+    <div className="sport-grid" aria-label="Pick sports">
       {sports.map((sport) => (
         <button
           className={
             selectedSports.some((selectedSport) => selectedSport.id === sport.id)
-              ? 'sport-card selected'
+              ? 'sport-card is-selected'
               : 'sport-card'
           }
           key={sport.id}
           onClick={() => toggleSport(sport)}
           type="button"
         >
-          <span className="sport-icon">{sport.icon}</span>
+          <SportIcon sportId={sport.id} />
           <span>{sport.label}</span>
         </button>
       ))}
@@ -528,7 +496,53 @@ function SportPicker({ selectedSports, setSelectedSports }) {
   );
 }
 
-function SelectionSearch({
+function SportIcon({ sportId }) {
+  return (
+    <span className={`sport-icon sport-icon-${sportId}`} aria-hidden="true">
+      <svg viewBox="0 0 32 32" role="img">
+        <circle cx="16" cy="16" r="12" />
+        {sportId === 'basketball' && (
+          <>
+            <path d="M4 16h24" />
+            <path d="M16 4v24" />
+            <path d="M9 7c5 5 5 13 0 18" />
+            <path d="M23 7c-5 5-5 13 0 18" />
+          </>
+        )}
+        {sportId === 'football' && (
+          <>
+            <path d="M16 8l5 4-2 6h-6l-2-6 5-4z" />
+            <path d="M7 18l6 0" />
+            <path d="M19 18l6 0" />
+          </>
+        )}
+        {sportId === 'tennis' && (
+          <>
+            <path d="M8 24l16-16" />
+            <path d="M20 8c4 4 4 8 0 12s-8 4-12 0" />
+          </>
+        )}
+        {sportId === 'f1' && <path d="M8 11h16M8 16h11M8 21h16" />}
+        {sportId === 'cricket' && <path d="M11 24l10-16M20 8l3 2M9 25l4 2" />}
+        {sportId === 'rugby' && <path d="M7 16c5-8 13-8 18 0-5 8-13 8-18 0z" />}
+        {sportId === 'nfl' && (
+          <>
+            <path d="M7 16c5-8 13-8 18 0-5 8-13 8-18 0z" />
+            <path d="M13 16h6M16 13v6" />
+          </>
+        )}
+        {sportId === 'baseball' && (
+          <>
+            <path d="M11 6c-2 6-2 14 0 20" />
+            <path d="M21 6c2 6 2 14 0 20" />
+          </>
+        )}
+      </svg>
+    </span>
+  );
+}
+
+function PickerSearch({
   items,
   label,
   optional = false,
@@ -541,14 +555,7 @@ function SelectionSearch({
   const normalizedQuery = query.trim().toLowerCase();
   const results = normalizedQuery
     ? items
-        .filter((item) => {
-          const searchableText =
-            type === 'team'
-              ? `${item.name} ${item.sport} ${item.league}`
-              : `${item.name} ${item.position} ${item.team}`;
-
-          return searchableText.toLowerCase().includes(normalizedQuery);
-        })
+        .filter((item) => searchableText(item, type).toLowerCase().includes(normalizedQuery))
         .filter((item) => !selectedItems.some((selectedItem) => selectedItem.id === item.id))
         .slice(0, 6)
     : [];
@@ -558,17 +565,13 @@ function SelectionSearch({
     setQuery('');
   };
 
-  const removeItem = (itemId) => {
-    setSelectedItems((currentItems) => currentItems.filter((item) => item.id !== itemId));
-  };
-
   return (
-    <div className="selection-search">
+    <div className="picker">
       <label htmlFor={`${type}-search`}>
         {label}
-        {optional && <span> Optional</span>}
+        {optional && <small>Optional</small>}
       </label>
-      <div className="search-input-wrap">
+      <div className="input-wrap">
         <input
           autoComplete="off"
           id={`${type}-search`}
@@ -579,11 +582,11 @@ function SelectionSearch({
         />
         {query && (
           <div className="dropdown" role="listbox">
-            {results.length > 0 ? (
+            {results.length ? (
               results.map((item) => (
                 <button key={item.id} onClick={() => addItem(item)} type="button">
                   <strong>{item.name}</strong>
-                  <span>{type === 'team' ? `${item.sport} - ${item.league}` : `${item.position} - ${item.team}`}</span>
+                  <span>{itemMeta(item, type)}</span>
                 </button>
               ))
             ) : (
@@ -592,62 +595,65 @@ function SelectionSearch({
           </div>
         )}
       </div>
-      <div className="selected-row" aria-label={`Selected ${type}s`}>
-        {selectedItems.length > 0 ? (
+      <div className="selected-list">
+        {selectedItems.length ? (
           selectedItems.map((item) => (
-            <button key={item.id} onClick={() => removeItem(item.id)} type="button">
-              {item.name} <span>Remove</span>
+            <button
+              key={item.id}
+              onClick={() =>
+                setSelectedItems((currentItems) =>
+                  currentItems.filter((currentItem) => currentItem.id !== item.id),
+                )
+              }
+              type="button"
+            >
+              {item.name}
+              <span>Remove</span>
             </button>
           ))
         ) : (
-          <p>{optional ? 'Skip this step or add a player.' : 'Search above to add at least one.'}</p>
+          <p>{optional ? 'No players selected yet. You can skip this.' : 'Search and select at least one.'}</p>
         )}
       </div>
     </div>
   );
 }
 
-function FeedPage({
-  addToWatchlist,
+function Feed({
   followedTeamNames,
-  onFollowItem,
-  onRemoveWatchlistItem,
+  onAddWatchlist,
+  onFollowWatchlist,
+  onRemoveWatchlist,
   profile,
   watchlist,
 }) {
-  const [activeTeam, setActiveTeam] = useState('All');
-  const [activeCategory, setActiveCategory] = useState('All');
-
-  const filteredArticles = useMemo(() => {
-    return [...articles]
-      .sort((first, second) => new Date(second.publishedAt) - new Date(first.publishedAt))
-      .filter((article) => activeTeam === 'All' || article.team === activeTeam)
-      .filter((article) => activeCategory === 'All' || article.category === activeCategory);
-  }, [activeCategory, activeTeam]);
+  const [teamFilter, setTeamFilter] = useState('All');
+  const [categoryFilter, setCategoryFilter] = useState('All');
+  const sortedNews = useMemo(
+    () => [...news].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt)),
+    [],
+  );
+  const filteredNews = sortedNews
+    .filter((article) => teamFilter === 'All' || article.team === teamFilter)
+    .filter((article) => categoryFilter === 'All' || article.category === categoryFilter);
 
   return (
-    <section className="page feed-page">
+    <section className="page-view feed-layout">
       <div className="feed-main">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Latest news</p>
-            <h2>Feed</h2>
-          </div>
-          <span>{filteredArticles.length} stories</span>
-        </div>
+        <PageHeading eyebrow="Latest news" title="Feed" meta={`${filteredNews.length} stories`} />
 
-        <div className="filter-panel">
+        <div className="filters" aria-label="Feed filters">
           <div>
-            <p>Teams</p>
+            <p>Followed teams</p>
             <div className="chip-row">
-              {['All', ...followedTeamNames].map((teamName) => (
+              {['All', ...followedTeamNames].map((team) => (
                 <button
-                  className={activeTeam === teamName ? 'chip active' : 'chip'}
-                  key={teamName}
-                  onClick={() => setActiveTeam(teamName)}
+                  className={teamFilter === team ? 'chip is-active' : 'chip'}
+                  key={team}
+                  onClick={() => setTeamFilter(team)}
                   type="button"
                 >
-                  {teamName}
+                  {team}
                 </button>
               ))}
             </div>
@@ -657,9 +663,9 @@ function FeedPage({
             <div className="chip-row">
               {categories.map((category) => (
                 <button
-                  className={activeCategory === category ? 'pill active' : 'pill'}
+                  className={categoryFilter === category ? 'pill is-active' : 'pill'}
                   key={category}
-                  onClick={() => setActiveCategory(category)}
+                  onClick={() => setCategoryFilter(category)}
                   type="button"
                 >
                   {category}
@@ -669,24 +675,24 @@ function FeedPage({
           </div>
         </div>
 
-        <div className="news-list">
-          {filteredArticles.length > 0 ? (
-            filteredArticles.map((article) => (
+        <div className="news-stack">
+          {filteredNews.length ? (
+            filteredNews.map((article) => (
               <article className="news-card" key={article.id}>
                 <div className="news-meta">
                   <strong>{article.team}</strong>
-                  <span className="category-badge">{article.category}</span>
-                  <span>{article.time}</span>
+                  <span className="badge">{article.category}</span>
+                  <span>{article.timeAgo}</span>
                 </div>
                 <h3>{article.headline}</h3>
                 <p>{article.snippet}</p>
                 <div className="news-actions">
                   <a href={article.url} rel="noreferrer" target="_blank">
-                    Read article -&gt;
+                    Read article &rarr;
                   </a>
-                  <WatchlistButton
-                    item={article.watchlistItem}
-                    onAdd={addToWatchlist}
+                  <WatchButton
+                    item={article.watchItem}
+                    onAdd={onAddWatchlist}
                     profile={profile}
                     watchlist={watchlist}
                   />
@@ -694,38 +700,35 @@ function FeedPage({
               </article>
             ))
           ) : (
-            <div className="empty-state">No stories match these filters.</div>
+            <div className="empty-card">No stories match these filters.</div>
           )}
         </div>
       </div>
 
-      <WatchlistSidebar
-        onFollowItem={onFollowItem}
-        onRemoveItem={onRemoveWatchlistItem}
+      <Watchlist
+        onFollow={onFollowWatchlist}
+        onRemove={onRemoveWatchlist}
         watchlist={watchlist}
       />
     </section>
   );
 }
 
-function WatchlistSidebar({ onFollowItem, onRemoveItem, watchlist }) {
+function Watchlist({ onFollow, onRemove, watchlist }) {
   return (
-    <aside className="watchlist-sidebar" aria-label="Watchlist">
-      <div className="watchlist-heading">
+    <aside className="watchlist" aria-label="Watchlist">
+      <div className="watchlist-head">
         <h2>Watchlist</h2>
         <span>{watchlist.length}</span>
       </div>
-
-      {watchlist.length === 0 ? (
-        <p className="watchlist-empty">Nothing added yet</p>
-      ) : (
-        <div className="watchlist-list">
+      {watchlist.length ? (
+        <div className="watchlist-items">
           {watchlist.map((item) => (
-            <article className="watchlist-item" key={item.id}>
+            <article className="watchlist-card" key={item.id}>
               <button
                 aria-label={`Remove ${item.name}`}
-                className="remove-button"
-                onClick={() => onRemoveItem(item.id)}
+                className="x-button"
+                onClick={() => onRemove(item.id)}
                 type="button"
               >
                 X
@@ -733,39 +736,34 @@ function WatchlistSidebar({ onFollowItem, onRemoveItem, watchlist }) {
               <span>{item.type}</span>
               <strong>{item.name}</strong>
               <p>{item.meta}</p>
-              <button className="follow-button" onClick={() => onFollowItem(item)} type="button">
+              <button className="follow-button" onClick={() => onFollow(item)} type="button">
                 Follow
               </button>
             </article>
           ))}
         </div>
+      ) : (
+        <p className="watchlist-empty">Nothing added yet</p>
       )}
     </aside>
   );
 }
 
-function SchedulePage() {
+function Schedule() {
   const todayIso = getTodayIso();
 
   return (
-    <section className="page">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">This week</p>
-          <h2>Schedule</h2>
-        </div>
-      </div>
-
-      <div className="calendar" aria-label="Weekly schedule">
-        {week.map((day) => (
-          <section className={day.isoDate === todayIso ? 'calendar-day today' : 'calendar-day'} key={day.id}>
+    <section className="page-view">
+      <PageHeading eyebrow="This week" title="Schedule" />
+      <div className="calendar" aria-label="Weekly match calendar">
+        {schedule.map((day) => (
+          <section className={day.isoDate === todayIso ? 'day-column today' : 'day-column'} key={day.id}>
             <header>
               <span>{day.day}</span>
               <strong>{day.date}</strong>
             </header>
-
-            <div className="match-stack">
-              {day.matches.length > 0 ? (
+            <div className="match-list">
+              {day.matches.length ? (
                 day.matches.map((match) => (
                   <article className="match-card" key={match.id}>
                     <h3>{match.teams}</h3>
@@ -785,51 +783,35 @@ function SchedulePage() {
   );
 }
 
-function PlayersPage({ addToWatchlist, followedPlayerIds, profile, updateProfile, watchlist }) {
+function Players({ followedPlayerIds, onAddWatchlist, onFollowPlayer, profile, watchlist }) {
   const [query, setQuery] = useState('');
   const normalizedQuery = query.trim().toLowerCase();
   const followedPlayers = profile.players;
-  const suggestedPlayers = players.filter((player) => !followedPlayerIds.includes(player.id)).slice(0, 6);
+  const suggestedPlayers = playerDirectory
+    .filter((player) => !followedPlayerIds.includes(player.id))
+    .slice(0, 6);
   const searchResults = normalizedQuery
-    ? players
-        .filter((player) =>
-          `${player.name} ${player.position} ${player.team}`.toLowerCase().includes(normalizedQuery),
-        )
-        .slice(0, 6)
+    ? playerDirectory
+        .filter((player) => searchableText(player, 'player').toLowerCase().includes(normalizedQuery))
+        .slice(0, 7)
     : [];
 
-  const followPlayer = (player) => {
-    updateProfile((currentProfile) => {
-      if (currentProfile.players.some((followedPlayer) => followedPlayer.id === player.id)) {
-        return currentProfile;
-      }
-
-      return { ...currentProfile, players: [...currentProfile.players, player] };
-    });
-  };
-
   return (
-    <section className="page players-page">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">Player tracking</p>
-          <h2>Players</h2>
-        </div>
-      </div>
-
+    <section className="page-view players-page">
+      <PageHeading eyebrow="Player tracking" title="Players" />
       <div className="player-search">
-        <label htmlFor="player-finder">Find players</label>
+        <label htmlFor="player-live-search">Search players</label>
         <input
           autoComplete="off"
-          id="player-finder"
+          id="player-live-search"
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by player, team, or position"
+          placeholder="Find a player by name, position, or team"
           type="search"
           value={query}
         />
         {query && (
-          <div className="player-dropdown">
-            {searchResults.length > 0 ? (
+          <div className="dropdown player-dropdown" role="listbox">
+            {searchResults.length ? (
               searchResults.map((player) => (
                 <div className="player-result" key={player.id}>
                   <div>
@@ -837,12 +819,12 @@ function PlayersPage({ addToWatchlist, followedPlayerIds, profile, updateProfile
                     <span>{player.position} - {player.team}</span>
                   </div>
                   <div className="result-actions">
-                    <button onClick={() => followPlayer(player)} type="button">
+                    <button onClick={() => onFollowPlayer(player)} type="button">
                       {followedPlayerIds.includes(player.id) ? 'Following' : 'Follow'}
                     </button>
-                    <WatchlistButton
-                      item={playerToWatchlistItem(player)}
-                      onAdd={addToWatchlist}
+                    <WatchButton
+                      item={playerToWatchItem(player)}
+                      onAdd={onAddWatchlist}
                       profile={profile}
                       watchlist={watchlist}
                     />
@@ -856,20 +838,20 @@ function PlayersPage({ addToWatchlist, followedPlayerIds, profile, updateProfile
         )}
       </div>
 
-      <PlayerGrid
-        addToWatchlist={addToWatchlist}
-        emptyText="Search above to add followed players."
+      <PlayerSection
+        emptyText="Use search above to follow players."
         followedPlayerIds={followedPlayerIds}
-        onFollowPlayer={followPlayer}
+        onAddWatchlist={onAddWatchlist}
+        onFollowPlayer={onFollowPlayer}
         players={followedPlayers}
         profile={profile}
         title="Followed players"
         watchlist={watchlist}
       />
-      <PlayerGrid
-        addToWatchlist={addToWatchlist}
+      <PlayerSection
         followedPlayerIds={followedPlayerIds}
-        onFollowPlayer={followPlayer}
+        onAddWatchlist={onAddWatchlist}
+        onFollowPlayer={onFollowPlayer}
         players={suggestedPlayers}
         profile={profile}
         title="Suggested players"
@@ -879,10 +861,10 @@ function PlayersPage({ addToWatchlist, followedPlayerIds, profile, updateProfile
   );
 }
 
-function PlayerGrid({
-  addToWatchlist,
-  emptyText = 'No players here yet.',
+function PlayerSection({
+  emptyText = 'No players to show.',
   followedPlayerIds,
+  onAddWatchlist,
   onFollowPlayer,
   players,
   profile,
@@ -892,24 +874,26 @@ function PlayerGrid({
   return (
     <section className="player-section">
       <h3>{title}</h3>
-      {players.length > 0 ? (
+      {players.length ? (
         <div className="player-grid">
           {players.map((player) => (
             <article className="player-card" key={player.id}>
-              <div className="avatar">{getInitials(player.name)}</div>
+              <div className="avatar" aria-hidden="true">
+                {initials(player.name)}
+              </div>
               <div>
                 <h4>{player.name}</h4>
                 <p>{player.position}</p>
                 <span>{player.team}</span>
               </div>
-              <small>{player.note}</small>
+              <small>{player.blurb}</small>
               <div className="card-actions">
                 <button onClick={() => onFollowPlayer(player)} type="button">
                   {followedPlayerIds.includes(player.id) ? 'Following' : 'Follow'}
                 </button>
-                <WatchlistButton
-                  item={playerToWatchlistItem(player)}
-                  onAdd={addToWatchlist}
+                <WatchButton
+                  item={playerToWatchItem(player)}
+                  onAdd={onAddWatchlist}
                   profile={profile}
                   watchlist={watchlist}
                 />
@@ -918,50 +902,96 @@ function PlayerGrid({
           ))}
         </div>
       ) : (
-        <div className="empty-state">{emptyText}</div>
+        <div className="empty-card">{emptyText}</div>
       )}
     </section>
   );
 }
 
-function WatchlistButton({ item, onAdd, profile, watchlist }) {
-  const isFollowing = isFollowingItem(item, profile);
-  const isAdded = watchlist.some((entry) => entry.id === item.id);
-  const label = isFollowing ? 'Following' : isAdded ? 'In watchlist' : 'Add to watchlist';
+function PageHeading({ eyebrow, meta, title }) {
+  return (
+    <div className="page-heading">
+      <div>
+        <p className="eyebrow">{eyebrow}</p>
+        <h2>{title}</h2>
+      </div>
+      {meta && <span>{meta}</span>}
+    </div>
+  );
+}
+
+function WatchButton({ item, onAdd, profile, watchlist }) {
+  const alreadyFollowing = isFollowing(item, profile);
+  const alreadyWatching = watchlist.some((entry) => entry.id === item.id);
 
   return (
-    <button disabled={isFollowing || isAdded} onClick={() => onAdd(item)} type="button">
-      {label}
+    <button disabled={alreadyFollowing || alreadyWatching} onClick={() => onAdd(item)} type="button">
+      {alreadyFollowing ? 'Following' : alreadyWatching ? 'In watchlist' : 'Add to watchlist'}
     </button>
   );
 }
 
 function loadProfile() {
   if (typeof window === 'undefined') {
-    return defaultProfile;
+    return emptyProfile;
   }
 
   try {
-    const savedProfile = JSON.parse(window.localStorage.getItem(profileStorageKey) ?? 'null');
-    if (!savedProfile) {
-      return defaultProfile;
+    const storedProfile = JSON.parse(window.localStorage.getItem(storageKey) ?? 'null');
+    if (!storedProfile) {
+      return emptyProfile;
     }
 
     return {
-      sports: Array.isArray(savedProfile.sports) ? savedProfile.sports : [],
-      teams: Array.isArray(savedProfile.teams) ? savedProfile.teams : [],
-      players: Array.isArray(savedProfile.players) ? savedProfile.players : [],
+      sports: Array.isArray(storedProfile.sports) ? storedProfile.sports : [],
+      teams: Array.isArray(storedProfile.teams) ? storedProfile.teams : [],
+      players: Array.isArray(storedProfile.players) ? storedProfile.players : [],
     };
   } catch {
-    return defaultProfile;
+    return emptyProfile;
   }
 }
 
 function saveProfile(profile) {
-  window.localStorage.setItem(profileStorageKey, JSON.stringify(profile));
+  window.localStorage.setItem(storageKey, JSON.stringify(profile));
 }
 
-function isFollowingItem(item, profile) {
+function followItemInProfile(item, profile) {
+  if (item.type === 'team') {
+    const team = teamDirectory.find((teamOption) => teamOption.id === item.id) ?? {
+      id: item.id,
+      name: item.name,
+      sport: 'Football',
+      league: item.meta,
+    };
+
+    if (profile.teams.some((followedTeam) => followedTeam.id === team.id)) {
+      return profile;
+    }
+
+    return { ...profile, teams: [...profile.teams, team] };
+  }
+
+  const player = playerDirectory.find((playerOption) => playerOption.id === item.id) ?? {
+    id: item.id,
+    name: item.name,
+    position: 'Player',
+    team: item.meta,
+    blurb: 'Moved from watchlist.',
+  };
+
+  return followPlayerInProfile(player, profile);
+}
+
+function followPlayerInProfile(player, profile) {
+  if (profile.players.some((followedPlayer) => followedPlayer.id === player.id)) {
+    return profile;
+  }
+
+  return { ...profile, players: [...profile.players, player] };
+}
+
+function isFollowing(item, profile) {
   if (item.type === 'team') {
     return profile.teams.some((team) => team.id === item.id);
   }
@@ -969,40 +999,50 @@ function isFollowingItem(item, profile) {
   return profile.players.some((player) => player.id === item.id);
 }
 
-function playerToWatchlistItem(player) {
+function playerToWatchItem(player) {
   return {
-    type: 'player',
     id: player.id,
-    name: player.name,
     meta: `${player.position} - ${player.team}`,
+    name: player.name,
+    type: 'player',
   };
 }
 
-function getStepTitle(step) {
+function searchableText(item, type) {
+  return type === 'team'
+    ? `${item.name} ${item.sport} ${item.league}`
+    : `${item.name} ${item.position} ${item.team}`;
+}
+
+function itemMeta(item, type) {
+  return type === 'team' ? `${item.sport} - ${item.league}` : `${item.position} - ${item.team}`;
+}
+
+function onboardingTitle(step) {
   if (step === 1) {
-    return 'Pick the sports you want to follow.';
+    return 'Pick your sports.';
   }
 
   if (step === 2) {
-    return 'Search for teams to follow.';
+    return 'Search teams to follow.';
   }
 
-  return 'Add players now, or skip this step.';
+  return 'Add players, or skip for now.';
 }
 
-function getStepText(step) {
+function onboardingText(step) {
   if (step === 1) {
-    return 'Choose one or more sports. Each selection helps Fieldwatch prioritize your feed.';
+    return 'Choose one or more sports to shape your Fieldwatch experience.';
   }
 
   if (step === 2) {
-    return 'Type a team name and select any clubs or franchises you want in your daily tracker.';
+    return 'Select the teams you want at the center of your feed and schedule.';
   }
 
-  return 'Players are optional. You can always find and follow more from the Players page.';
+  return 'Player follows are optional. You can always add more from the Players page.';
 }
 
-function getInitials(name) {
+function initials(name) {
   return name
     .split(' ')
     .map((part) => part[0])
